@@ -477,7 +477,8 @@ export const getCandidateApplications = async (candidateId: string): Promise<any
 
 export const getCompanyApplications = async (companyId: string): Promise<any[]> => {
   try {
-    const { data, error } = await supabase
+    // Récupérer les candidatures avec les relations
+    const { data: applicationsData, error: applicationsError } = await supabase
       .from('applications')
       .select(`
         *,
@@ -497,55 +498,72 @@ export const getCompanyApplications = async (companyId: string): Promise<any[]> 
             experience,
             education
           )
-        ),
-        candidate_decision_dna!left (
-          decision_dna,
-          compatibility_score
         )
       `)
       .eq('job_offers.company_id', companyId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching company applications:', error);
+    if (applicationsError) {
+      console.error('Error fetching company applications:', applicationsError);
       return [];
     }
 
-    return (data || []).map((app: any) => ({
-      id: app.id,
-      jobOfferId: app.job_offer_id,
-      candidateId: app.candidate_id,
-      status: app.status,
-      createdAt: app.created_at,
-      jobOffer: app.job_offers
-        ? {
-            id: app.job_offers.id,
-            title: app.job_offers.title,
-            decisionDNAEnabled: app.job_offers.decision_dna_enabled || false,
-            decisionDNAMode: app.job_offers.decision_dna_mode || 'no_test',
-            decisionProfileTarget: app.job_offers.decision_profile_target || undefined,
-          }
-        : undefined,
-      candidate: app.candidates?.candidate_profiles
-        ? {
-            skills: app.candidates.candidate_profiles.skills || [],
-            experience: app.candidates.candidate_profiles.experience || 0,
-            education: app.candidates.candidate_profiles.education || '',
-            certified: app.candidates.certified || false,
-          }
-        : undefined,
-      decisionDNA: (() => {
-        const dna = app.candidate_decision_dna;
-        if (!dna) return undefined;
-        // Gérer le cas où c'est un tableau (relation one-to-many) ou un objet (relation one-to-one)
-        const dnaData = Array.isArray(dna) ? dna[0] : dna;
-        if (!dnaData) return undefined;
-        return {
-          decisionDNA: dnaData.decision_dna,
-          compatibilityScore: dnaData.compatibility_score,
-        };
-      })(),
-    }));
+    if (!applicationsData || applicationsData.length === 0) {
+      return [];
+    }
+
+    // Récupérer les Decision DNA pour toutes les candidatures
+    const applicationIds = applicationsData.map((app: any) => app.id);
+    const { data: dnaData, error: dnaError } = await supabase
+      .from('candidate_decision_dna')
+      .select('application_id, decision_dna, compatibility_score')
+      .in('application_id', applicationIds);
+
+    if (dnaError) {
+      console.error('Error fetching Decision DNA:', dnaError);
+    }
+
+    // Créer un map pour accéder rapidement aux Decision DNA par application_id
+    const dnaMap = new Map();
+    if (dnaData) {
+      dnaData.forEach((dna: any) => {
+        dnaMap.set(dna.application_id, {
+          decisionDNA: dna.decision_dna,
+          compatibilityScore: dna.compatibility_score,
+        });
+      });
+    }
+
+    // Mapper les données avec les Decision DNA
+    return applicationsData.map((app: any) => {
+      const dna = dnaMap.get(app.id);
+      
+      return {
+        id: app.id,
+        jobOfferId: app.job_offer_id,
+        candidateId: app.candidate_id,
+        status: app.status,
+        createdAt: app.created_at,
+        jobOffer: app.job_offers
+          ? {
+              id: app.job_offers.id,
+              title: app.job_offers.title,
+              decisionDNAEnabled: app.job_offers.decision_dna_enabled || false,
+              decisionDNAMode: app.job_offers.decision_dna_mode || 'no_test',
+              decisionProfileTarget: app.job_offers.decision_profile_target || undefined,
+            }
+          : undefined,
+        candidate: app.candidates?.candidate_profiles
+          ? {
+              skills: app.candidates.candidate_profiles.skills || [],
+              experience: app.candidates.candidate_profiles.experience || 0,
+              education: app.candidates.candidate_profiles.education || '',
+              certified: app.candidates.certified || false,
+            }
+          : undefined,
+        decisionDNA: dna || undefined,
+      };
+    });
   } catch (error) {
     console.error('Error in getCompanyApplications:', error);
     return [];
@@ -1193,19 +1211,29 @@ export const saveCandidateDecisionDNA = async (
   compatibilityScore?: number
 ): Promise<boolean> => {
   try {
+    // Utiliser upsert avec la clé unique application_id
     const { error } = await supabase
       .from('candidate_decision_dna')
-      .upsert({
-        application_id: applicationId,
-        decision_dna: decisionDNA,
-        compatibility_score: compatibilityScore || null,
-      });
+      .upsert(
+        {
+          application_id: applicationId,
+          decision_dna: decisionDNA,
+          compatibility_score: compatibilityScore !== undefined ? compatibilityScore : null,
+        },
+        {
+          onConflict: 'application_id',
+        }
+      );
 
     if (error) {
       console.error('Error saving candidate Decision DNA:', error);
+      console.error('Application ID:', applicationId);
+      console.error('Decision DNA:', decisionDNA);
+      console.error('Compatibility Score:', compatibilityScore);
       return false;
     }
 
+    console.log('Decision DNA saved successfully for application:', applicationId);
     return true;
   } catch (error) {
     console.error('Error in saveCandidateDecisionDNA:', error);

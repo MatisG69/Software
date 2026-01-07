@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { LoadingScreen } from './components/LoadingScreen';
 
 // Pages publiques
 import { Home } from './pages/Home';
@@ -27,6 +29,22 @@ import { CompanyMessages } from './pages/company/Messages';
 import { CompanyProfile } from './pages/company/Profile';
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Précharger les ressources essentielles
+    const preloadResources = async () => {
+      // Simuler un temps de chargement minimum pour l'animation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    };
+
+    preloadResources();
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen onComplete={() => setIsLoading(false)} />;
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>

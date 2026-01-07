@@ -22,6 +22,13 @@ export const CompanyApplications = () => {
       setLoading(true);
       try {
         const apps = await getCompanyApplications(company.id);
+        console.log('Loaded applications:', apps);
+        // Log pour déboguer les Decision DNA
+        apps.forEach((app: any) => {
+          if (app.decisionDNA) {
+            console.log(`Application ${app.id} - Decision DNA:`, app.decisionDNA);
+          }
+        });
         setApplications(apps);
       } catch (error) {
         console.error('Error loading applications:', error);
