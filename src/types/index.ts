@@ -74,6 +74,7 @@ export interface Application {
   candidateId: string;
   status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
   createdAt: string;
+  skills?: string[];
   jobOffer?: JobOffer;
   decisionDNA?: CandidateDecisionDNA;
 }

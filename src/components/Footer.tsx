@@ -1,0 +1,13 @@
+export const Footer = () => {
+  return (
+    <footer className="mt-auto py-6 border-t border-border/30">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-center">
+          <p className="text-xs text-muted-foreground tracking-wider uppercase">
+            CREATED BY ELYNDRA · TRAJECTORY OS
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};

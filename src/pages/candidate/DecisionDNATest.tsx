@@ -7,8 +7,12 @@ import { useAuth } from '../../context/AuthContext';
 import { MicroScenario, DecisionDNAResponse } from '../../types';
 import { extractDecisionDNA, calculateCompatibility } from '@/lib/decisionDNA';
 import { generateFirstScenario, generateNextScenario } from '@/lib/openai';
-import { saveDecisionDNAResponses, saveCandidateDecisionDNA, createApplication, getJobOfferById } from '@/lib/supabase';
-import { Loader2, CheckCircle, Sparkles, Brain, Clock, ChevronRight } from 'lucide-react';
+import { saveDecisionDNAResponses, saveCandidateDecisionDNA, createApplication, getJobOfferById, getCandidateProfile } from '@/lib/supabase';
+import { Loader2, CheckCircle, Sparkles, Brain, Clock, ChevronRight, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 export const DecisionDNATest = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +32,26 @@ export const DecisionDNATest = () => {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [scenarioTransition, setScenarioTransition] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showSkillsForm, setShowSkillsForm] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState('');
+  const [profileSkills, setProfileSkills] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadProfileSkills = async () => {
+      if (!candidate?.id) return;
+      try {
+        const profile = await getCandidateProfile(candidate.id);
+        if (profile?.profile?.skills) {
+          setProfileSkills(profile.profile.skills);
+        }
+      } catch (error) {
+        console.error('Error loading profile skills:', error);
+      }
+    };
+
+    loadProfileSkills();
+  }, [candidate?.id]);
 
   useEffect(() => {
     const loadJobAndGenerateScenarios = async () => {
@@ -124,8 +148,13 @@ export const DecisionDNATest = () => {
     // Vérifier si on a atteint le nombre total de scénarios
     const totalScenarios = 20;
     if (currentScenarioIndex + 1 >= totalScenarios) {
-      // Tous les scénarios sont terminés
-      handleComplete();
+      // Tous les scénarios Decision DNA sont terminés
+      // Afficher le formulaire de compétences comme étape séparée
+      setSelectedOptionId(null);
+      setScenarioTransition(false);
+      setIsTransitioning(false);
+      setGeneratingScenarios(false);
+      setShowSkillsForm(true);
       return;
     }
 
@@ -141,8 +170,13 @@ export const DecisionDNATest = () => {
       );
 
       if (!nextScenario) {
-        alert('Erreur lors de la génération du scénario suivant. Le test sera terminé.');
-        handleComplete();
+        alert('Erreur lors de la génération du scénario suivant. Le test Decision DNA sera terminé.');
+        // Afficher le formulaire de compétences même en cas d'erreur
+        setSelectedOptionId(null);
+        setScenarioTransition(false);
+        setIsTransitioning(false);
+        setGeneratingScenarios(false);
+        setShowSkillsForm(true);
         return;
       }
 
@@ -167,19 +201,49 @@ export const DecisionDNATest = () => {
       setIsTransitioning(false);
     } catch (error) {
       console.error('Error generating next scenario:', error);
-      alert('Erreur lors de la génération du scénario suivant. Le test sera terminé.');
-      handleComplete();
+      alert('Erreur lors de la génération du scénario suivant. Le test Decision DNA sera terminé.');
+      // Afficher le formulaire de compétences même en cas d'erreur
+      setSelectedOptionId(null);
+      setScenarioTransition(false);
+      setIsTransitioning(false);
+      setGeneratingScenarios(false);
+      setShowSkillsForm(true);
     }
   };
 
+  const toggleSkill = (skill: string) => {
+    if (selectedSkills.includes(skill)) {
+      setSelectedSkills(selectedSkills.filter(s => s !== skill));
+    } else {
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+  };
+
+  const addNewSkill = () => {
+    const trimmedSkill = newSkill.trim();
+    if (trimmedSkill && !selectedSkills.includes(trimmedSkill) && !profileSkills.includes(trimmedSkill)) {
+      setSelectedSkills([...selectedSkills, trimmedSkill]);
+      setNewSkill('');
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setSelectedSkills(selectedSkills.filter(s => s !== skill));
+  };
+
   const handleComplete = async () => {
+    if (selectedSkills.length === 0) {
+      alert('Veuillez sélectionner au moins une compétence');
+      return;
+    }
+
     if (!id || !candidate?.id || !jobOffer) return;
 
     setSubmitting(true);
 
     try {
-      // Créer la candidature d'abord
-      const application = await createApplication(id, candidate.id);
+      // Créer la candidature avec les compétences
+      const application = await createApplication(id, candidate.id, selectedSkills);
       if (!application) {
         alert('Erreur lors de la création de la candidature');
         setSubmitting(false);
@@ -264,6 +328,112 @@ export const DecisionDNATest = () => {
               </div>
             </div>
           </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (showSkillsForm && !completed) {
+    return (
+      <Layout>
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 py-8">
+          <Card className="w-full max-w-2xl border-2 border-primary">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle>Test Decision DNA terminé</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Sélectionnez maintenant vos compétences pour finaliser votre candidature
+                  </p>
+                </div>
+              </div>
+              <Alert className="mt-4">
+                <AlertDescription>
+                  Cette étape est indépendante du test Decision DNA. Choisissez les compétences que vous souhaitez mettre en avant pour cette candidature spécifique.
+                </AlertDescription>
+              </Alert>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profileSkills.length > 0 && (
+                <div>
+                  <Label className="mb-2 block">Compétences de votre profil</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {profileSkills.map((skill) => (
+                      <Badge
+                        key={skill}
+                        variant={selectedSkills.includes(skill) ? 'default' : 'outline'}
+                        className="cursor-pointer"
+                        onClick={() => toggleSkill(skill)}
+                      >
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label className="mb-2 block">Ajouter une compétence</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addNewSkill();
+                      }
+                    }}
+                    placeholder="Ex: React, Python, Gestion de projet..."
+                  />
+                  <Button onClick={addNewSkill} variant="outline">
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
+
+              {selectedSkills.length > 0 && (
+                <div>
+                  <Label className="mb-2 block">Compétences sélectionnées ({selectedSkills.length})</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSkills.map((skill) => (
+                      <Badge key={skill} variant="default" className="flex items-center gap-1">
+                        {skill}
+                        <X
+                          className="w-3 h-3 cursor-pointer"
+                          onClick={() => removeSkill(skill)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleComplete}
+                  disabled={submitting || selectedSkills.length === 0}
+                  size="lg"
+                  className="flex-1"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Envoi...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Finaliser la candidature
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     );

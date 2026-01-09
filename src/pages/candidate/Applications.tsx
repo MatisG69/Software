@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Layout } from '../../components/Layout';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, MessageSquare, MapPin, Briefcase, Building2, Calendar, ExternalLink, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,15 +34,15 @@ export const CandidateApplications = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+        return <Clock className="w-4 h-4" />;
       case 'reviewed':
-        return <CheckCircle className="w-5 h-5 text-blue-600" />;
+        return <CheckCircle className="w-4 h-4" />;
       case 'accepted':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle className="w-4 h-4" />;
       case 'rejected':
-        return <XCircle className="w-5 h-5 text-destructive" />;
+        return <XCircle className="w-4 h-4" />;
       default:
-        return <Clock className="w-5 h-5 text-muted-foreground" />;
+        return <Clock className="w-4 h-4" />;
     }
   };
 
@@ -76,66 +76,170 @@ export const CandidateApplications = () => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
+      case 'reviewed':
+        return 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20';
+      case 'accepted':
+        return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
+      case 'rejected':
+        return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
+      default:
+        return 'bg-muted text-muted-foreground border-border';
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-foreground">Mes candidatures</h1>
+        {/* Header amélioré */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mes candidatures</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Suivez l'état de vos candidatures et restez en contact avec les entreprises
+          </p>
+        </div>
+
+        {/* Statistiques rapides */}
+        {!loading && applications.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="border-2">
+              <CardContent className="pt-4 pb-4">
+                <div className="text-2xl font-bold text-foreground">{applications.length}</div>
+                <div className="text-sm text-muted-foreground">Total</div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-yellow-500/20">
+              <CardContent className="pt-4 pb-4">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                  {applications.filter(a => a.status === 'pending').length}
+                </div>
+                <div className="text-sm text-muted-foreground">En attente</div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-blue-500/20">
+              <CardContent className="pt-4 pb-4">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {applications.filter(a => a.status === 'reviewed').length}
+                </div>
+                <div className="text-sm text-muted-foreground">Entretiens</div>
+              </CardContent>
+            </Card>
+            <Card className="border-2 border-green-500/20">
+              <CardContent className="pt-4 pb-4">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {applications.filter(a => a.status === 'accepted').length}
+                </div>
+                <div className="text-sm text-muted-foreground">Acceptées</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="space-y-4">
           {loading ? (
-            <Card>
-              <CardContent className="pt-6 text-center py-12">
+            <Card className="border-2">
+              <CardContent className="pt-12 pb-12 text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Chargement des candidatures...</p>
+                <p className="text-muted-foreground font-medium">Chargement des candidatures...</p>
               </CardContent>
             </Card>
           ) : applications.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center py-12">
-                <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">Aucune candidature pour le moment</p>
-                <Button asChild>
-                  <Link to="/candidate/jobs">Rechercher des emplois</Link>
+            <Card className="border-2">
+              <CardContent className="pt-16 pb-16 text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
+                  <FileText className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Aucune candidature pour le moment</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Commencez votre recherche d'emploi et postulez aux offres qui vous intéressent.
+                </p>
+                <Button asChild size="lg">
+                  <Link to="/candidate/jobs" className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4" />
+                    Rechercher des emplois
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
           ) : (
             applications.map((application) => (
-              <Card key={application.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-4">
-                        <CardTitle className="text-xl">{application.jobOffer?.title}</CardTitle>
-                        <Badge variant={getStatusVariant(application.status)} className="flex items-center gap-2">
+              <Card 
+                key={application.id} 
+                className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50 group"
+              >
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      {/* Titre et badge de statut */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 md:gap-4">
+                        <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold group-hover:text-primary transition-colors break-words">
+                          {application.jobOffer?.title}
+                        </CardTitle>
+                        <Badge 
+                          variant={getStatusVariant(application.status)} 
+                          className={`flex items-center gap-1.5 w-fit ${getStatusColor(application.status)} border`}
+                        >
                           {getStatusIcon(application.status)}
                           {getStatusLabel(application.status)}
                         </Badge>
                       </div>
+
+                      {/* Informations de l'offre */}
                       {application.jobOffer && (
-                        <div className="flex items-center gap-6 text-sm text-muted-foreground mb-4">
-                          <span className="font-semibold">{application.jobOffer.company}</span>
-                          <span>{application.jobOffer.location}</span>
-                          <span>{application.jobOffer.type}</span>
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Building2 className="w-4 h-4 text-primary" />
+                            <span className="font-semibold text-foreground">{application.jobOffer.company}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="w-4 h-4 text-primary" />
+                            <span>{application.jobOffer.location}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Briefcase className="w-4 h-4 text-primary" />
+                            <span>{application.jobOffer.type}</span>
+                          </div>
                         </div>
                       )}
-                      <CardDescription>
-                        Candidature envoyée le{' '}
-                        {new Date(application.createdAt).toLocaleDateString('fr-FR')}
-                      </CardDescription>
+
+                      {/* Date de candidature */}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          Candidature envoyée le{' '}
+                          <span className="font-medium text-foreground">
+                            {new Date(application.createdAt).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <Button variant="outline" asChild>
-                      <Link to={`/candidate/jobs/${application.jobOfferId}`}>Voir l'offre</Link>
+                <CardContent className="pt-0">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button variant="outline" asChild className="flex-1 sm:flex-initial group/btn">
+                      <Link to={`/candidate/jobs/${application.jobOfferId}`} className="flex items-center justify-center gap-2">
+                        <ExternalLink className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                        Voir l'offre
+                      </Link>
                     </Button>
                     {application.status !== 'rejected' && (
-                      <Button asChild>
-                        <Link to={`/candidate/messages?application=${application.id}`} className="flex items-center gap-2">
+                      <Button asChild className="flex-1 sm:flex-initial">
+                        <Link to={`/candidate/messages?application=${application.id}`} className="flex items-center justify-center gap-2">
                           <MessageSquare className="w-4 h-4" />
-                          <span>Messages</span>
+                          Messages
                         </Link>
                       </Button>
                     )}

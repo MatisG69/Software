@@ -2,7 +2,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   MessageSquare,
-  Bell,
   User,
   LogOut,
   Search,
@@ -12,6 +11,7 @@ import {
   FileText,
   Shield,
   ChevronRight,
+  Bookmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +29,6 @@ export const Navbar = () => {
   const { user, signOut, candidate, company } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const notificationCount = 3; // This should come from Supabase
 
   const handleSignOut = async () => {
     await signOut();
@@ -47,7 +46,7 @@ export const Navbar = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-20">
             <Link to="/" className="text-3xl font-serif font-bold text-primary relative group">
-              <span className="relative z-10">AnonRecruit</span>
+              <span className="relative z-10">ELYNDRA · TRAJECTORY OS</span>
               <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></span>
             </Link>
             <div className="flex items-center gap-4">
@@ -70,23 +69,23 @@ export const Navbar = () => {
     { icon: Home, label: 'Tableau de bord', path: '/candidate/dashboard' },
     { icon: Search, label: 'Recherche d\'emplois', path: '/candidate/jobs' },
     { icon: FileText, label: 'Mes candidatures', path: '/candidate/applications' },
+    { icon: Bookmark, label: 'Mes Favoris', path: '/candidate/favorites' },
     { icon: MessageSquare, label: 'Messages', path: '/candidate/messages' },
-    { icon: Bell, label: 'Notifications', path: '/candidate/notifications', badge: notificationCount },
-    { icon: Shield, label: 'Vérification', path: '/candidate/verification' },
     { icon: User, label: 'Mon profil', path: '/candidate/profile' },
   ];
 
   return (
     <>
       <nav className="bg-card/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-border/50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-20">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex justify-between items-center h-16 sm:h-20">
             {/* Logo */}
             <Link 
               to={candidate ? '/candidate/dashboard' : '/company/dashboard'} 
-              className="text-2xl font-serif font-medium text-foreground hover:text-primary transition-colors duration-500"
+              className="text-lg sm:text-xl md:text-2xl font-serif font-medium text-foreground hover:text-primary transition-colors duration-500 break-words"
             >
-              AnonRecruit
+              <span className="hidden sm:inline">ELYNDRA · TRAJECTORY OS</span>
+              <span className="sm:hidden">ELYNDRA</span>
             </Link>
 
             {/* Menu Button - Hamburger style Cheval Blanc */}
@@ -169,7 +168,7 @@ export const Navbar = () => {
           {/* Menu Panel style Cheval Blanc - épuré et élégant */}
           <div
             className={cn(
-              "fixed top-0 left-0 h-full w-80 lg:w-96 bg-card z-50 border-r border-border/50 transition-all duration-1000 ease-in-out transform",
+              "fixed top-0 left-0 h-full w-full sm:w-80 lg:w-96 bg-card z-50 border-r border-border/50 transition-all duration-1000 ease-in-out transform",
               isMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}
           >
@@ -182,7 +181,7 @@ export const Navbar = () => {
               >
                 <span className="flex items-center gap-2">
                   <ChevronRight className="w-4 h-4 rotate-180" />
-                  AnonRecruit
+                  ELYNDRA · TRAJECTORY OS
                 </span>
               </Link>
               <button

@@ -1,5 +1,5 @@
 -- ============================================
--- Schema SQL pour AnonRecruit
+-- Schema SQL pour ELYNDRA · TRAJECTORY OS
 -- Plateforme de recrutement 100% anonyme
 -- ============================================
 
@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS applications (
   job_offer_id UUID NOT NULL REFERENCES job_offers(id) ON DELETE CASCADE,
   candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'accepted', 'rejected')),
+  skills TEXT[] DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(job_offer_id, candidate_id)
@@ -180,21 +181,27 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers pour updated_at
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_candidates_updated_at ON candidates;
 CREATE TRIGGER update_candidates_updated_at BEFORE UPDATE ON candidates
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_candidate_profiles_updated_at ON candidate_profiles;
 CREATE TRIGGER update_candidate_profiles_updated_at BEFORE UPDATE ON candidate_profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_companies_updated_at ON companies;
 CREATE TRIGGER update_companies_updated_at BEFORE UPDATE ON companies
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_job_offers_updated_at ON job_offers;
 CREATE TRIGGER update_job_offers_updated_at BEFORE UPDATE ON job_offers
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_applications_updated_at ON applications;
 CREATE TRIGGER update_applications_updated_at BEFORE UPDATE ON applications
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

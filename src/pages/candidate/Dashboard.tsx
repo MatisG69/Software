@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useAuth } from '../../context/AuthContext';
-import { Briefcase, Search, CheckCircle, Shield } from 'lucide-react';
+import { Briefcase, Search, CheckCircle, Shield, Lock, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,113 +44,170 @@ export const CandidateDashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Bienvenue{candidate?.firstName ? `, ${candidate.firstName}` : ''}
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Retrouvez vos opportunités et suivez vos candidatures
-            </p>
+      <div className="space-y-8 min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-12">
+        {/* Header amélioré */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 p-4 sm:p-6 md:p-8 mb-6 md:mb-8">
+          {/* Effets de fond */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
           </div>
-          {candidate?.certified && (
-            <Badge variant="default" className="flex items-center gap-2 px-4 py-2 text-sm">
-              <Shield className="w-4 h-4" />
-              <span>Profil certifié</span>
-            </Badge>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Candidatures</CardTitle>
-              <Briefcase className="h-12 w-12 text-primary" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="animate-pulse">
-                  <div className="h-8 w-16 bg-muted rounded"></div>
-                </div>
-              ) : (
-                <div className="text-3xl font-bold text-foreground">{stats.applications}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Entretiens</CardTitle>
-              <CheckCircle className="h-12 w-12 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="animate-pulse">
-                  <div className="h-8 w-16 bg-muted rounded"></div>
-                </div>
-              ) : (
-                <div className="text-3xl font-bold text-foreground">{stats.interviews}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Correspondances</CardTitle>
-              <CheckCircle className="h-12 w-12 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="animate-pulse">
-                  <div className="h-8 w-16 bg-muted rounded"></div>
-                </div>
-              ) : (
-                <div className="text-3xl font-bold text-foreground">{stats.matches}</div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions rapides</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              <Button variant="outline" asChild className="h-auto flex-col items-start p-6">
-                <Link to="/candidate/jobs" className="flex items-center gap-3">
-                  <Search className="w-6 h-6 text-primary" />
-                  <div className="text-left">
-                    <p className="font-semibold">Rechercher un emploi</p>
-                    <p className="text-sm text-muted-foreground">Trouvez des offres adaptées</p>
-                  </div>
-                </Link>
-              </Button>
-              <Button variant="outline" asChild className="h-auto flex-col items-start p-6">
-                <Link to="/candidate/applications" className="flex items-center gap-3">
-                  <Briefcase className="w-6 h-6 text-primary" />
-                  <div className="text-left">
-                    <p className="font-semibold">Mes candidatures</p>
-                    <p className="text-sm text-muted-foreground">Suivez vos postulations</p>
-                  </div>
-                </Link>
-              </Button>
-              {!candidate?.certified && (
-                <Button variant="outline" asChild className="h-auto flex-col items-start p-6 border-yellow-200 bg-yellow-50 hover:bg-yellow-100">
-                  <Link to="/candidate/verification" className="flex items-center gap-3">
-                    <Shield className="w-6 h-6 text-yellow-600" />
-                    <div className="text-left">
-                      <p className="font-semibold">Certifier mon profil</p>
-                      <p className="text-sm text-muted-foreground">Vérifiez votre identité</p>
-                    </div>
-                  </Link>
-                </Button>
-              )}
+          
+          <div className="relative flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
+                Bienvenue{candidate?.firstName ? `, ${candidate.firstName}` : ''}
+              </h1>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                Retrouvez vos opportunités et suivez vos candidatures
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            {candidate?.certified && (
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:border-primary/50 hover:bg-primary/20 transition-all duration-300 shadow-md hover:shadow-lg rounded-xl"
+              >
+                <Lock className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-foreground">Profil certifié</span>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Stats - Design amélioré */}
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-300 shadow-lg hover:shadow-xl rounded-xl group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6">
+              <CardTitle className="text-base font-semibold text-foreground">Candidatures</CardTitle>
+              <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                <Briefcase className="h-7 w-7 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-10 w-20 bg-muted rounded"></div>
+                </div>
+              ) : (
+                <div className="text-4xl font-bold text-foreground mb-1">{stats.applications}</div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="relative overflow-hidden border-2 border-border hover:border-green-500/50 transition-all duration-300 shadow-lg hover:shadow-xl rounded-xl group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6">
+              <CardTitle className="text-base font-semibold text-foreground">Entretiens</CardTitle>
+              <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors duration-300">
+                <CheckCircle className="h-7 w-7 text-green-600 dark:text-green-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-10 w-20 bg-muted rounded"></div>
+                </div>
+              ) : (
+                <div className="text-4xl font-bold text-foreground mb-1">{stats.interviews}</div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="relative overflow-hidden border-2 border-border hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-xl rounded-xl group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6">
+              <CardTitle className="text-base font-semibold text-foreground">Correspondances</CardTitle>
+              <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors duration-300">
+                <Users className="h-7 w-7 text-purple-600 dark:text-purple-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="pb-6">
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-10 w-20 bg-muted rounded"></div>
+                </div>
+              ) : (
+                <div className="text-4xl font-bold text-foreground mb-1">{stats.matches}</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions - Design amélioré */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-8 bg-primary rounded-full"></div>
+            <h2 className="text-2xl font-bold text-foreground">Actions rapides</h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <Link to="/candidate/jobs" className="block group">
+              <Card className="relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-300 shadow-lg hover:shadow-xl rounded-xl cursor-pointer h-full">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <CardContent className="p-8 relative">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300 mb-2">
+                      <Search className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                        Rechercher un emploi
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Trouvez des offres adaptées
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link to="/candidate/applications" className="block group">
+              <Card className="relative overflow-hidden border-2 border-border hover:border-primary/50 transition-all duration-300 shadow-lg hover:shadow-xl rounded-xl cursor-pointer h-full">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <CardContent className="p-8 relative">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300 mb-2">
+                      <Briefcase className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                        Mes candidatures
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Suivez vos postulations
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            {!candidate?.certified && (
+              <Link to="/candidate/verification" className="block group md:col-span-1">
+                <Card className="relative overflow-hidden border-2 border-yellow-300 dark:border-yellow-700 hover:border-yellow-400 dark:hover:border-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl rounded-xl cursor-pointer bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-950/30 dark:to-yellow-900/20 h-full">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <CardContent className="p-8 relative">
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-yellow-100 dark:bg-yellow-900/50 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/70 transition-colors duration-300 mb-2">
+                        <Shield className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xl font-bold text-foreground group-hover:text-yellow-700 dark:group-hover:text-yellow-300 transition-colors duration-300">
+                          Certifier mon profil
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Vérifiez votre identité
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
     </Layout>
   );

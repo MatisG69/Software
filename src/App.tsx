@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { LoadingScreen } from './components/LoadingScreen';
 
 // Pages publiques
 import { Home } from './pages/Home';
@@ -18,6 +16,7 @@ import { CandidateMessages } from './pages/candidate/Messages';
 import { CandidateNotifications } from './pages/candidate/Notifications';
 import { CandidateProfile } from './pages/candidate/Profile';
 import { Verification } from './pages/candidate/Verification';
+import { Favorites } from './pages/candidate/Favorites';
 import { DecisionDNATest } from './pages/candidate/DecisionDNATest';
 
 // Pages entreprises
@@ -29,22 +28,6 @@ import { CompanyMessages } from './pages/company/Messages';
 import { CompanyProfile } from './pages/company/Profile';
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Précharger les ressources essentielles
-    const preloadResources = async () => {
-      // Simuler un temps de chargement minimum pour l'animation
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    };
-
-    preloadResources();
-  }, []);
-
-  if (isLoading) {
-    return <LoadingScreen onComplete={() => setIsLoading(false)} />;
-  }
-
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -92,6 +75,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['candidate']}>
                 <CandidateApplications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/candidate/favorites"
+            element={
+              <ProtectedRoute allowedRoles={['candidate']}>
+                <Favorites />
               </ProtectedRoute>
             }
           />

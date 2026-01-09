@@ -226,11 +226,15 @@ export const CompanyApplications = () => {
                                 <div className="md:col-span-2">
                                   <CardDescription className="text-sm font-semibold mb-2">Compétences</CardDescription>
                                   <div className="flex flex-wrap gap-2">
-                                    {application.candidate.skills?.map((skill: string, idx: number) => (
-                                      <Badge key={idx} variant="secondary">
-                                        {skill}
-                                      </Badge>
-                                    ))}
+                                    {application.skills && application.skills.length > 0 ? (
+                                      application.skills.map((skill: string, idx: number) => (
+                                        <Badge key={idx} variant="secondary">
+                                          {skill}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <p className="text-sm text-muted-foreground">Aucune compétence spécifiée</p>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -352,15 +356,21 @@ export const CompanyApplications = () => {
                                         <div>
                                           <p className="text-sm text-muted-foreground mb-1">Compétences</p>
                                           <div className="flex flex-wrap gap-1">
-                                            {application.candidate.skills?.slice(0, 3).map((skill: string, idx: number) => (
-                                              <Badge key={idx} variant="secondary" className="text-xs">
-                                                {skill}
-                                              </Badge>
-                                            ))}
-                                            {application.candidate.skills?.length > 3 && (
-                                              <Badge variant="secondary" className="text-xs">
-                                                +{application.candidate.skills.length - 3}
-                                              </Badge>
+                                            {application.skills && application.skills.length > 0 ? (
+                                              <>
+                                                {application.skills.slice(0, 3).map((skill: string, idx: number) => (
+                                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                                    {skill}
+                                                  </Badge>
+                                                ))}
+                                                {application.skills.length > 3 && (
+                                                  <Badge variant="secondary" className="text-xs">
+                                                    +{application.skills.length - 3}
+                                                  </Badge>
+                                                )}
+                                              </>
+                                            ) : (
+                                              <p className="text-xs text-muted-foreground">Aucune compétence spécifiée</p>
                                             )}
                                           </div>
                                         </div>

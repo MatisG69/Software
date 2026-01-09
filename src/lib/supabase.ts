@@ -398,20 +398,62 @@ export const deleteJobOffer = async (id: string): Promise<boolean> => {
 // FONCTIONS POUR LES CANDIDATURES
 // ============================================
 
-export const createApplication = async (jobOfferId: string, candidateId: string): Promise<Application | null> => {
+export const createApplication = async (jobOfferId: string, candidateId: string, skills?: string[]): Promise<Application | null> => {
   try {
+    // Préparer les données d'insertion
+    const insertData: any = {
+      job_offer_id: jobOfferId,
+      candidate_id: candidateId,
+      status: 'pending',
+    };
+
+    // Ajouter les compétences seulement si elles sont fournies
+    // Si la colonne n'existe pas encore, on ne l'inclut pas dans l'insert
+    if (skills && skills.length > 0) {
+      insertData.skills = skills;
+    } else if (skills !== undefined) {
+      // Si skills est un tableau vide, on l'inclut quand même (cas où la colonne existe)
+      insertData.skills = [];
+    }
+
     const { data, error } = await supabase
       .from('applications')
-      .insert({
-        job_offer_id: jobOfferId,
-        candidate_id: candidateId,
-        status: 'pending',
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) {
       console.error('Error creating application:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      // Si l'erreur est due à une colonne manquante, essayer sans skills
+      if (error.message && error.message.includes('column') && error.message.includes('skills')) {
+        console.warn('Column skills does not exist, retrying without skills field');
+        const { data: retryData, error: retryError } = await supabase
+          .from('applications')
+          .insert({
+            job_offer_id: jobOfferId,
+            candidate_id: candidateId,
+            status: 'pending',
+          })
+          .select()
+          .single();
+
+        if (retryError) {
+          console.error('Error creating application (retry):', retryError);
+          return null;
+        }
+
+        return {
+          id: retryData.id,
+          jobOfferId: retryData.job_offer_id,
+          candidateId: retryData.candidate_id,
+          status: retryData.status,
+          createdAt: retryData.created_at,
+          skills: [],
+        };
+      }
+      
       return null;
     }
 
@@ -421,6 +463,7 @@ export const createApplication = async (jobOfferId: string, candidateId: string)
       candidateId: data.candidate_id,
       status: data.status,
       createdAt: data.created_at,
+      skills: data.skills || [],
     };
   } catch (error) {
     console.error('Error in createApplication:', error);
@@ -544,6 +587,7 @@ export const getCompanyApplications = async (companyId: string): Promise<any[]> 
         candidateId: app.candidate_id,
         status: app.status,
         createdAt: app.created_at,
+        skills: app.skills || [],
         jobOffer: app.job_offers
           ? {
               id: app.job_offers.id,
@@ -555,7 +599,7 @@ export const getCompanyApplications = async (companyId: string): Promise<any[]> 
           : undefined,
         candidate: app.candidates?.candidate_profiles
           ? {
-              skills: app.candidates.candidate_profiles.skills || [],
+              skills: app.skills || app.candidates.candidate_profiles.skills || [],
               experience: app.candidates.candidate_profiles.experience || 0,
               education: app.candidates.candidate_profiles.education || '',
               certified: app.candidates.certified || false,
@@ -1292,6 +1336,156 @@ export const getDecisionDNAResponses = async (applicationId: string): Promise<De
     }));
   } catch (error) {
     console.error('Error in getDecisionDNAResponses:', error);
+    return [];
+  }
+};
+
+// ============================================
+// FONCTIONS POUR LES FAVORIS
+// ============================================
+
+export const addFavoriteJob = async (candidateId: string, jobOfferId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('favorite_jobs')
+      .insert({
+        candidate_id: candidateId,
+        job_offer_id: jobOfferId,
+      });
+
+    if (error) {
+      // Si l'erreur est due à une contrainte unique, c'est OK (déjà en favoris)
+      if (error.code === '23505') {
+        return true;
+      }
+      console.error('Error adding favorite job:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error in addFavoriteJob:', error);
+    return false;
+  }
+};
+
+export const removeFavoriteJob = async (candidateId: string, jobOfferId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('favorite_jobs')
+      .delete()
+      .eq('candidate_id', candidateId)
+      .eq('job_offer_id', jobOfferId);
+
+    if (error) {
+      console.error('Error removing favorite job:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error in removeFavoriteJob:', error);
+    return false;
+  }
+};
+
+export const getFavoriteJobIds = async (candidateId: string): Promise<Set<string>> => {
+  try {
+    const { data, error } = await supabase
+      .from('favorite_jobs')
+      .select('job_offer_id')
+      .eq('candidate_id', candidateId);
+
+    if (error) {
+      console.error('Error fetching favorite job IDs:', error);
+      return new Set();
+    }
+
+    return new Set((data || []).map((fav: any) => fav.job_offer_id));
+  } catch (error) {
+    console.error('Error in getFavoriteJobIds:', error);
+    return new Set();
+  }
+};
+
+export const getFavoriteJobs = async (candidateId: string): Promise<JobOffer[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('favorite_jobs')
+      .select(`
+        job_offer_id,
+        job_offers (
+          *,
+          companies (
+            id,
+            name,
+            description,
+            website,
+            industry,
+            size,
+            benefits,
+            what_you_will_live,
+            what_we_will_love,
+            who_we_are
+          )
+        )
+      `)
+      .eq('candidate_id', candidateId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching favorite jobs:', error);
+      return [];
+    }
+
+    return (data || [])
+      .map((fav: any) => fav.job_offers)
+      .filter((job: any) => job !== null)
+      .map((job: any) => ({
+        id: job.id,
+        companyId: job.company_id,
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements || [],
+        location: job.location,
+        type: job.type,
+        category: job.category,
+        salary: job.salary_min || job.salary_max
+          ? {
+              min: job.salary_min,
+              max: job.salary_max,
+              currency: job.salary_currency || 'EUR',
+            }
+          : undefined,
+        createdAt: job.created_at,
+        missions: job.missions,
+        expectedExperience: job.expected_experience,
+        otherInformation: job.other_information,
+        benefits: job.benefits,
+        whatYouWillLive: job.what_you_will_live,
+        whatWeWillLove: job.what_we_will_love,
+        whoWeAre: job.who_we_are,
+        decisionDNAEnabled: job.decision_dna_enabled || false,
+        decisionDNAMode: job.decision_dna_mode || 'no_test',
+        decisionProfileTarget: job.decision_profile_target || undefined,
+        company: job.companies
+          ? {
+              id: job.companies.id,
+              email: '',
+              role: 'company' as const,
+              createdAt: '',
+              name: job.companies.name,
+              description: job.companies.description,
+              website: job.companies.website,
+              industry: job.companies.industry,
+              size: job.companies.size,
+              benefits: job.companies.benefits,
+              whatYouWillLive: job.companies.what_you_will_live,
+              whatWeWillLove: job.companies.what_we_will_love,
+              whoWeAre: job.companies.who_we_are,
+            }
+          : undefined,
+      }));
+  } catch (error) {
+    console.error('Error in getFavoriteJobs:', error);
     return [];
   }
 };

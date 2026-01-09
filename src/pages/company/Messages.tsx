@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '../../components/Layout';
-import { Send, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare, X, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -130,13 +130,23 @@ export const CompanyMessages = () => {
     );
   }
 
+  const [showConversations, setShowConversations] = useState(window.innerWidth >= 768);
+
   return (
     <Layout>
-      <div className="flex h-[calc(100vh-200px)] gap-4">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-200px)] gap-4">
         {/* Conversations List */}
-        <Card className="w-1/3 flex flex-col">
-          <CardHeader>
-            <CardTitle>Messages</CardTitle>
+        <Card className={`${showConversations ? 'flex' : 'hidden'} md:flex w-full md:w-1/3 lg:w-1/4 flex-col`}>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-xl md:text-2xl">Messages</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowConversations(false)}
+              className="md:hidden"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-0">
             {conversations.length === 0 ? (
@@ -148,7 +158,12 @@ export const CompanyMessages = () => {
               conversations.map((conversation) => (
                 <button
                   key={conversation.id}
-                  onClick={() => setSelectedConversation(conversation.id)}
+                  onClick={() => {
+                    setSelectedConversation(conversation.id);
+                    if (window.innerWidth < 768) {
+                      setShowConversations(false);
+                    }
+                  }}
                   className={`w-full p-4 text-left hover:bg-muted transition border-b border-border ${
                     selectedConversation === conversation.id ? 'bg-accent/50' : ''
                   }`}
@@ -170,15 +185,27 @@ export const CompanyMessages = () => {
         </Card>
 
         {/* Messages */}
-        <Card className="flex-1 flex flex-col">
+        <Card className="flex-1 flex flex-col min-h-0">
           {selectedConv ? (
             <>
-              <CardHeader>
-                <CardTitle>{selectedConv.jobTitle}</CardTitle>
-                <CardDescription>{selectedConv.company}</CardDescription>
-                <CardDescription className="text-xs mt-2">
-                  💬 Communication anonyme - L'identité du candidat reste protégée
-                </CardDescription>
+              <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowConversations(true)}
+                      className="md:hidden -ml-2"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                    </Button>
+                    <CardTitle className="text-lg md:text-xl break-words">{selectedConv.jobTitle}</CardTitle>
+                  </div>
+                  <CardDescription className="text-sm">{selectedConv.company}</CardDescription>
+                  <CardDescription className="text-xs mt-2">
+                    💬 Communication anonyme - L'identité du candidat reste protégée
+                  </CardDescription>
+                </div>
               </CardHeader>
               <Separator />
               <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30">
@@ -195,7 +222,7 @@ export const CompanyMessages = () => {
                       }`}
                     >
                       <Card
-                        className={`max-w-[70%] ${
+                        className={`max-w-[85%] sm:max-w-[70%] ${
                           message.senderId === company?.id
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-card'

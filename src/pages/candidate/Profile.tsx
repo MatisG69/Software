@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '../../components/Layout';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, CheckCircle, XCircle, Save } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Save, Edit, Lock, Lightbulb, MapPin, User, Mail, GraduationCap, Briefcase, Code } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,187 +117,271 @@ export const CandidateProfile = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-3xl">Mon profil</CardTitle>
+      <div className="space-y-8 min-h-screen pb-12">
+        {/* Header amélioré */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <h1 className="text-4xl font-bold text-foreground">Mon profil</h1>
           {!editing ? (
-            <Button onClick={() => setEditing(true)}>
+            <Button 
+              onClick={() => setEditing(true)}
+              className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-6"
+            >
+              <Edit className="w-4 h-4 mr-2" />
               Modifier
             </Button>
           ) : (
-            <Button onClick={handleSave} disabled={loading}>
-              <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setEditing(false)}
+                className="rounded-xl"
+              >
+                Annuler
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={loading}
+                className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {loading ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </div>
           )}
         </div>
 
-        {/* Verification Status */}
+        {/* Badge Profil certifié amélioré */}
         {candidate?.certified ? (
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-8 h-8 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-green-900 flex items-center gap-2 mb-1">
-                    <Shield className="w-5 h-5" />
-                    Profil certifié
-                  </h3>
-                  <p className="text-green-700">
-                    Votre identité a été vérifiée. Les entreprises savent que votre profil est authentique.
-                  </p>
-                </div>
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-green-50 via-emerald-50 to-green-100 dark:from-green-950/40 dark:via-emerald-950/30 dark:to-green-900/20 border-2 border-green-200 dark:border-green-800 p-6 shadow-lg">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-green-200/20 dark:bg-green-800/20 rounded-bl-full"></div>
+            <div className="relative flex items-center gap-4">
+              <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-green-100 dark:bg-green-900/50 flex-shrink-0 shadow-md">
+                <Shield className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
-            </AlertDescription>
-          </Alert>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-green-900 dark:text-green-100 mb-1 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Profil certifié
+                </h3>
+                <p className="text-green-800 dark:text-green-200 text-sm">
+                  Votre identité a été vérifiée. Les entreprises savent que votre profil est authentique.
+                </p>
+              </div>
+            </div>
+          </div>
         ) : (
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <XCircle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <XCircle className="w-8 h-8 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-yellow-900 mb-1">Profil non certifié</h3>
-                  <p className="text-yellow-700 mb-4">
-                    Vérifiez votre identité pour obtenir un badge de certification et augmenter vos chances.
-                  </p>
-                  <Button asChild variant="outline" className="border-yellow-600 text-yellow-900 hover:bg-yellow-100">
-                    <Link to="/candidate/verification">Vérifier mon identité</Link>
-                  </Button>
-                </div>
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-yellow-50 via-amber-50 to-yellow-100 dark:from-yellow-950/40 dark:via-amber-950/30 dark:to-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 p-6 shadow-lg">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-200/20 dark:bg-yellow-800/20 rounded-bl-full"></div>
+            <div className="relative flex items-center gap-4">
+              <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-yellow-100 dark:bg-yellow-900/50 flex-shrink-0 shadow-md">
+                <Shield className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
               </div>
-            </AlertDescription>
-          </Alert>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-yellow-900 dark:text-yellow-100 mb-1">Profil non certifié</h3>
+                <p className="text-yellow-800 dark:text-yellow-200 text-sm mb-4">
+                  Vérifiez votre identité pour obtenir un badge de certification et augmenter vos chances.
+                </p>
+                <Button asChild variant="outline" className="border-yellow-600 dark:border-yellow-700 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 rounded-xl">
+                  <Link to="/candidate/verification">Vérifier mon identité</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Profile Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Informations personnelles</CardTitle>
+        {/* Profile Information - Design amélioré */}
+        <Card className="border-2 border-border rounded-xl shadow-lg">
+          <CardHeader className="pb-5 pt-6 px-6 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-8 bg-primary rounded-full"></div>
+              <CardTitle className="text-2xl font-bold text-foreground">Informations personnelles</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6 px-6 pb-6">
             <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="firstName">Prénom</Label>
+              {/* Prénom */}
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Prénom
+                </Label>
                 {editing ? (
                   <Input
                     id="firstName"
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="mt-2"
+                    className="mt-2 border-2 rounded-xl h-11"
+                    placeholder="Votre prénom"
                   />
                 ) : (
-                  <p className="px-4 py-2 bg-muted rounded-lg mt-2">{formData.firstName || 'Non renseigné'}</p>
+                  <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[44px] flex items-center">
+                    <span className="text-foreground">{formData.firstName || 'Non renseigné'}</span>
+                  </div>
                 )}
               </div>
-              <div>
-                <Label htmlFor="lastName">Nom</Label>
+
+              {/* Nom */}
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Nom
+                </Label>
                 {editing ? (
                   <Input
                     id="lastName"
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="mt-2"
+                    className="mt-2 border-2 rounded-xl h-11"
+                    placeholder="Votre nom"
                   />
                 ) : (
-                  <p className="px-4 py-2 bg-muted rounded-lg mt-2">{formData.lastName || 'Non renseigné'}</p>
+                  <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[44px] flex items-center">
+                    <span className="text-foreground">{formData.lastName || 'Non renseigné'}</span>
+                  </div>
                 )}
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="email">Email</Label>
-                <p className="px-4 py-2 bg-muted rounded-lg mt-2">{candidate?.email}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  💡 L'email n'est jamais partagé avec les entreprises pour préserver votre anonymat
-                </p>
+
+              {/* Email */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Email
+                </Label>
+                <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[44px] flex items-center">
+                  <span className="text-foreground font-medium">{candidate?.email}</span>
+                </div>
+                <div className="flex items-start gap-2 mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-blue-800 dark:text-blue-200">
+                    L'email n'est jamais partagé avec les entreprises pour préserver votre anonymat
+                  </p>
+                </div>
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="location">Localisation</Label>
+
+              {/* Localisation */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="location" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Localisation
+                </Label>
                 {editing ? (
                   <Input
                     id="location"
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="mt-2"
+                    className="mt-2 border-2 rounded-xl h-11"
+                    placeholder="Ville, région ou télétravail"
                   />
                 ) : (
-                  <p className="px-4 py-2 bg-muted rounded-lg mt-2">{formData.location || 'Non renseigné'}</p>
+                  <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[44px] flex items-center">
+                    <span className="text-foreground">{formData.location || 'Non renseigné'}</span>
+                  </div>
                 )}
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="bio">Biographie</Label>
+
+              {/* Biographie */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="bio" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Biographie
+                </Label>
                 {editing ? (
                   <Textarea
                     id="bio"
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    rows={4}
-                    className="mt-2"
+                    rows={5}
+                    className="mt-2 border-2 rounded-xl resize-none"
+                    placeholder="Parlez-nous de vous, de votre parcours et de vos aspirations..."
                   />
                 ) : (
-                  <p className="px-4 py-2 bg-muted rounded-lg mt-2 min-h-[100px]">
-                    {formData.bio || 'Aucune biographie'}
-                  </p>
+                  <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[120px] flex items-start">
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                      {formData.bio || 'Aucune biographie'}
+                    </p>
+                  </div>
                 )}
               </div>
-              <div>
-                <Label htmlFor="experience">Années d'expérience</Label>
+
+              {/* Années d'expérience */}
+              <div className="space-y-2">
+                <Label htmlFor="experience" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  Années d'expérience
+                </Label>
                 {editing ? (
                   <Input
                     id="experience"
                     type="number"
                     value={formData.experience}
                     onChange={(e) => setFormData({ ...formData, experience: parseInt(e.target.value) || 0 })}
-                    className="mt-2"
+                    className="mt-2 border-2 rounded-xl h-11"
+                    placeholder="0"
+                    min="0"
                   />
                 ) : (
-                  <p className="px-4 py-2 bg-muted rounded-lg mt-2">{formData.experience} ans</p>
+                  <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[44px] flex items-center">
+                    <span className="text-foreground">{formData.experience} {formData.experience > 1 ? 'ans' : 'an'}</span>
+                  </div>
                 )}
               </div>
-              <div>
-                <Label htmlFor="education">Formation</Label>
+
+              {/* Formation */}
+              <div className="space-y-2">
+                <Label htmlFor="education" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  Formation
+                </Label>
                 {editing ? (
                   <Input
                     id="education"
                     type="text"
                     value={formData.education}
                     onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                    className="mt-2"
+                    className="mt-2 border-2 rounded-xl h-11"
+                    placeholder="Diplôme, école, université..."
                   />
                 ) : (
-                  <p className="px-4 py-2 bg-muted rounded-lg mt-2">{formData.education || 'Non renseigné'}</p>
+                  <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[44px] flex items-center">
+                    <span className="text-foreground">{formData.education || 'Non renseigné'}</span>
+                  </div>
                 )}
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="skills">Compétences</Label>
+
+              {/* Compétences */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="skills" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Code className="w-4 h-4" />
+                  Compétences
+                </Label>
                 {editing ? (
                   <Input
                     id="skills"
                     type="text"
                     value={formData.skills}
                     onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                    placeholder="Séparez les compétences par des virgules"
-                    className="mt-2"
+                    placeholder="Séparez les compétences par des virgules (ex: React, TypeScript, Node.js)"
+                    className="mt-2 border-2 rounded-xl h-11"
                   />
                 ) : (
-                  <div className="px-4 py-2 bg-muted rounded-lg mt-2">
+                  <div className="px-4 py-3 bg-muted/50 rounded-xl border-2 border-border mt-2 min-h-[60px] flex items-center">
                     {formData.skills ? (
                       <div className="flex flex-wrap gap-2">
-                        {formData.skills.split(', ').map((skill, idx) => (
-                          <Badge key={idx} variant="secondary">
-                            {skill}
+                        {formData.skills.split(',').map((skill, idx) => (
+                          <Badge 
+                            key={idx} 
+                            variant="secondary" 
+                            className="px-3 py-1.5 text-sm font-semibold bg-primary/10 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/20 hover:text-primary transition-all duration-200 rounded-lg"
+                          >
+                            {skill.trim()}
                           </Badge>
                         ))}
                       </div>
                     ) : (
-                      <p>Aucune compétence renseignée</p>
+                      <span className="text-muted-foreground">Aucune compétence renseignée</span>
                     )}
                   </div>
                 )}
