@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '../../context/AuthContext';
 import { createJobOffer, updateJobOffer, getJobOfferById, getCompanyProfile } from '@/lib/supabase';
 
@@ -390,7 +391,8 @@ export const CompanyJobForm = () => {
               </div>
 
               {/* Champs pré-remplis depuis le profil mais modifiables */}
-              <div className="border-t border-border pt-6 space-y-6">
+              <div className="pt-6 space-y-6">
+                <Separator className="mb-6" />
                 <Alert>
                   <AlertDescription>
                     💡 Ces champs sont pré-remplis depuis votre profil entreprise mais vous pouvez les modifier pour cette offre spécifique.

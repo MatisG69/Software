@@ -13,6 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getJobOffers, addFavoriteJob, removeFavoriteJob, getFavoriteJobIds } from '@/lib/supabase';
 import { JobOffer } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -225,13 +228,14 @@ export const CandidateJobs = () => {
                   </div>
 
                   {/* Advanced Filters - Avec animation */}
-                  <div className="mt-6 pt-6 border-t border-border">
+                  <div className="mt-6 pt-6">
+                    <Separator className="mb-6" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
                           <Briefcase className="w-4 h-4" />
                           Type de contrat
-                        </label>
+                        </Label>
                         <Select value={selectedType} onValueChange={setSelectedType}>
                           <SelectTrigger className="h-11 border-2 hover:border-primary/50 transition-colors">
                             <SelectValue placeholder="Tous les types" />
@@ -246,10 +250,10 @@ export const CandidateJobs = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
                           <TrendingUp className="w-4 h-4" />
                           Catégorie
-                        </label>
+                        </Label>
                         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                           <SelectTrigger className="h-11 border-2 hover:border-primary/50 transition-colors">
                             <SelectValue placeholder="Toutes les catégories" />
@@ -276,12 +280,16 @@ export const CandidateJobs = () => {
           <div className="container mx-auto px-4 pb-12 min-h-screen">
             {loading ? (
             <Card className="max-w-2xl mx-auto shadow-lg">
-              <CardContent className="pt-12 pb-12 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <CardContent className="pt-12 pb-12 space-y-4">
+                <div className="space-y-3">
+                  <Skeleton className="h-8 w-3/4 mx-auto" />
+                  <Skeleton className="h-4 w-1/2 mx-auto" />
                 </div>
-                <p className="text-lg font-semibold text-foreground mb-2">Recherche en cours...</p>
-                <p className="text-sm text-muted-foreground">Nous analysons les meilleures offres pour vous</p>
+                <div className="space-y-3 pt-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                  ))}
+                </div>
               </CardContent>
             </Card>
           ) : (

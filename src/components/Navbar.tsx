@@ -6,11 +6,9 @@ import {
   LogOut,
   Search,
   Menu,
-  X,
   Home,
   FileText,
   Shield,
-  ChevronRight,
   Bookmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,8 +17,16 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { ThemeToggle } from './ThemeToggle';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -42,19 +48,18 @@ export const Navbar = () => {
 
   if (!user) {
     return (
-      <nav className="bg-card/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b-2 border-primary/20">
+      <nav className="bg-card/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-20">
-            <Link to="/" className="text-3xl font-serif font-bold text-primary relative group">
-              <span className="relative z-10">ELYNDRA · TRAJECTORY OS</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></span>
+          <div className="flex justify-between items-center h-16">
+            <Link to="/" className="text-2xl font-serif font-semibold text-foreground hover:text-primary transition-colors">
+              ELYNDRA · TRAJECTORY OS
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <ThemeToggle />
-              <Button variant="ghost" asChild className="font-serif">
+              <Button variant="ghost" asChild size="sm">
                 <Link to="/login">Connexion</Link>
               </Button>
-              <Button asChild className="font-serif bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-500 shadow-lg hover:shadow-xl">
+              <Button asChild size="sm">
                 <Link to="/register">Inscription</Link>
               </Button>
             </div>
@@ -76,73 +81,66 @@ export const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-card/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-border/50">
+      <nav className="bg-card/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-3 sm:px-4">
-          <div className="flex justify-between items-center h-16 sm:h-20">
+          <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link 
               to={candidate ? '/candidate/dashboard' : '/company/dashboard'} 
-              className="text-lg sm:text-xl md:text-2xl font-serif font-medium text-foreground hover:text-primary transition-colors duration-500 break-words"
+              className="text-lg sm:text-xl font-serif font-semibold text-foreground hover:text-primary transition-colors"
             >
               <span className="hidden sm:inline">ELYNDRA · TRAJECTORY OS</span>
               <span className="sm:hidden">ELYNDRA</span>
             </Link>
 
-            {/* Menu Button - Hamburger style Cheval Blanc */}
+            {/* Menu Button pour candidats */}
             {candidate && (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <ThemeToggle />
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={toggleMenu}
-                  className="relative w-10 h-10 flex flex-col justify-center items-center group transition-all duration-500"
                   aria-label="Toggle menu"
                 >
-                  {/* Hamburger Icon minimaliste style Cheval Blanc */}
-                  <span
-                    className={cn(
-                      "absolute w-6 h-[1.5px] bg-foreground transition-all duration-700 ease-in-out",
-                      isMenuOpen ? "rotate-45 translate-y-0" : "-translate-y-1.5"
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "absolute w-6 h-[1.5px] bg-foreground transition-all duration-700 ease-in-out",
-                      isMenuOpen ? "opacity-0 scale-0" : "opacity-100 scale-100"
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "absolute w-6 h-[1.5px] bg-foreground transition-all duration-700 ease-in-out",
-                      isMenuOpen ? "-rotate-45 translate-y-0" : "translate-y-1.5"
-                    )}
-                  />
-                </button>
+                  <Menu className="w-5 h-5" />
+                </Button>
               </div>
             )}
 
+            {/* Menu Dropdown pour entreprises */}
             {company && (
               <div className="flex items-center gap-3">
                 <ThemeToggle />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="font-serif">
+                    <Button variant="ghost" size="icon">
                       <Menu className="w-5 h-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="font-serif border-2 border-primary/20 shadow-xl">
+                  <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem asChild>
-                      <Link to="/company/jobs">Mes offres</Link>
+                      <Link to="/company/jobs" className="cursor-pointer">
+                        Mes offres
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/company/applications">Candidatures</Link>
+                      <Link to="/company/applications" className="cursor-pointer">
+                        Candidatures
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/company/messages">Messages</Link>
+                      <Link to="/company/messages" className="cursor-pointer">
+                        Messages
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/company/profile">Mon profil</Link>
+                      <Link to="/company/profile" className="cursor-pointer">
+                        Mon profil
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSignOut}>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                       Déconnexion
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -153,49 +151,24 @@ export const Navbar = () => {
         </div>
       </nav>
 
-      {/* Menu Overlay style Cheval Blanc - minimaliste */}
+      {/* Menu Sheet pour candidats */}
       {candidate && (
-        <>
-          {/* Overlay subtil */}
-          <div
-            className={cn(
-              "fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-all duration-1000 ease-in-out",
-              isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-            )}
-            onClick={toggleMenu}
-          />
-
-          {/* Menu Panel style Cheval Blanc - épuré et élégant */}
-          <div
-            className={cn(
-              "fixed top-0 left-0 h-full w-full sm:w-80 lg:w-96 bg-card z-50 border-r border-border/50 transition-all duration-1000 ease-in-out transform",
-              isMenuOpen ? "translate-x-0" : "-translate-x-full"
-            )}
-          >
-            {/* Header minimaliste */}
-            <div className="h-20 flex items-center justify-between px-8 border-b border-border/50">
-              <Link 
-                to="/candidate/dashboard" 
-                onClick={toggleMenu}
-                className="text-lg font-serif font-medium text-foreground hover:text-primary transition-colors duration-500"
-              >
-                <span className="flex items-center gap-2">
-                  <ChevronRight className="w-4 h-4 rotate-180" />
+        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <SheetContent side="left" className="w-full sm:w-80 p-0">
+            <SheetHeader className="px-6 py-4 border-b">
+              <SheetTitle className="text-left">
+                <Link 
+                  to="/candidate/dashboard" 
+                  onClick={toggleMenu}
+                  className="text-lg font-serif font-semibold text-foreground hover:text-primary transition-colors"
+                >
                   ELYNDRA · TRAJECTORY OS
-                </span>
-              </Link>
-              <button
-                onClick={toggleMenu}
-                className="relative w-8 h-8 flex items-center justify-center group transition-all duration-500"
-                aria-label="Close menu"
-              >
-                <X className="w-5 h-5 text-foreground group-hover:text-primary transition-colors duration-500" />
-              </button>
-            </div>
-
-            {/* Menu Items style Cheval Blanc - liste verticale épurée */}
-            <nav className="flex flex-col py-8 px-8 space-y-1 h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar">
-              {candidateMenuItems.map((item, index) => {
+                </Link>
+              </SheetTitle>
+            </SheetHeader>
+            
+            <nav className="flex flex-col py-4">
+              {candidateMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = window.location.pathname === item.path;
                 
@@ -205,114 +178,50 @@ export const Navbar = () => {
                     to={item.path}
                     onClick={toggleMenu}
                     className={cn(
-                      "group relative flex items-center justify-between px-4 py-4 text-left transition-all duration-500 ease-in-out",
-                      "hover:bg-muted/30",
-                      isActive && "text-primary"
+                      "flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors",
+                      "hover:bg-muted/50",
+                      isActive ? "bg-muted/50 text-primary border-r-2 border-primary" : "text-foreground"
                     )}
-                    style={{
-                      animationDelay: `${index * 60}ms`,
-                      animation: isMenuOpen ? 'fadeInLeft 0.6s ease-out forwards' : 'none',
-                      opacity: isMenuOpen ? 1 : 0,
-                    }}
                   >
-                    <div className="flex items-center gap-4">
-                      <Icon className={cn(
-                        "w-5 h-5 transition-all duration-500",
-                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                      )} />
-                      <span className={cn(
-                        "font-serif text-base transition-all duration-500",
-                        isActive ? "text-primary font-medium" : "text-foreground group-hover:text-primary"
-                      )}>
-                        {item.label}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {/* Badge pour notifications */}
-                      {item.badge && item.badge > 0 && (
-                        <Badge 
-                          variant="destructive" 
-                          className="text-xs h-5 px-1.5"
-                        >
-                          {item.badge}
-                        </Badge>
-                      )}
-
-                      {/* Chevron droit style Cheval Blanc */}
-                      <ChevronRight className={cn(
-                        "w-4 h-4 transition-all duration-500",
-                        isActive ? "text-primary translate-x-0" : "text-muted-foreground group-hover:text-primary group-hover:translate-x-1"
-                      )} />
-                    </div>
+                    <Icon className={cn(
+                      "w-5 h-5",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )} />
+                    <span>{item.label}</span>
+                    {item.badge && item.badge > 0 && (
+                      <Badge variant="destructive" className="ml-auto text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </Link>
                 );
               })}
 
-              {/* Séparateur élégant */}
-              <div className="my-6 border-t border-border/50"></div>
+              <Separator className="my-4" />
 
-              {/* Section déconnexion */}
               <button
                 onClick={() => {
                   toggleMenu();
                   handleSignOut();
                 }}
-                className="group relative flex items-center justify-between px-4 py-4 text-left transition-all duration-500 ease-in-out hover:bg-muted/30 w-full"
-                style={{
-                  animationDelay: `${candidateMenuItems.length * 60}ms`,
-                  animation: isMenuOpen ? 'fadeInLeft 0.6s ease-out forwards' : 'none',
-                  opacity: isMenuOpen ? 1 : 0,
-                }}
+                className="flex items-center gap-3 px-6 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-destructive transition-colors duration-500" />
-                  <span className="font-serif text-base text-foreground group-hover:text-destructive transition-colors duration-500">
-                    Déconnexion
-                  </span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-destructive group-hover:translate-x-1 transition-all duration-500" />
+                <LogOut className="w-5 h-5" />
+                <span>Déconnexion</span>
               </button>
             </nav>
 
-            {/* Footer minimaliste */}
             {candidate?.certified && (
-              <div className="absolute bottom-0 left-0 right-0 h-20 border-t border-border/50 flex items-center justify-center px-8">
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
+              <div className="absolute bottom-0 left-0 right-0 border-t p-4">
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
                   <Shield className="w-4 h-4 text-primary" />
-                  <span className="font-serif text-sm text-primary font-medium">Profil certifié</span>
+                  <span className="text-sm text-primary font-medium">Profil certifié</span>
                 </div>
               </div>
             )}
-          </div>
-        </>
+          </SheetContent>
+        </Sheet>
       )}
-
-      <style>{`
-        @keyframes fadeInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-1rem);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: hsl(var(--border));
-          border-radius: 2px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: hsl(var(--primary) / 0.3);
-        }
-      `}</style>
     </>
   );
 };

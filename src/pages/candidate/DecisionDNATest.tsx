@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export const DecisionDNATest = () => {
   const { id } = useParams<{ id: string }>();
@@ -701,7 +702,8 @@ export const DecisionDNATest = () => {
 
                   {/* Temps recommandé avec design moderne */}
                   {currentScenario.time_limit && !generatingScenarios && !selectedOptionId && (
-                    <div className="text-center pt-4 border-t border-border/50">
+                    <div className="text-center pt-4">
+                      <Separator className="mb-4 opacity-50" />
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-full">
                         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                         <p className="text-xs text-muted-foreground">

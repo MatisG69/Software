@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '../../context/AuthContext';
 import { getCompanyApplications, updateApplicationStatus } from '@/lib/supabase';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const CompanyApplications = () => {
   const { company } = useAuth();
@@ -168,12 +169,17 @@ export const CompanyApplications = () => {
 
           <TabsContent value="list" className="space-y-4">
             {loading ? (
-              <Card>
-                <CardContent className="pt-6 text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Chargement des candidatures...</p>
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="pt-6 space-y-4">
+                      <Skeleton className="h-6 w-1/3" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             ) : applications.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center py-12">

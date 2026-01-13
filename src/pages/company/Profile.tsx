@@ -237,7 +237,8 @@ export const CompanyProfile = () => {
               </div>
 
               {/* Nouveaux champs pour le profil entreprise */}
-              <div className="border-t border-border pt-6 space-y-6">
+              <div className="pt-6 space-y-6">
+                <Separator className="mb-6" />
                 <div>
                   <Label htmlFor="whoWeAre">Qui sommes-nous</Label>
                   {editing ? (
