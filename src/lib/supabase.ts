@@ -8,6 +8,25 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
+// UTILITAIRES
+// ============================================
+
+/**
+ * Vérifie si une erreur Supabase est une erreur 404 (NOT_FOUND)
+ * et peut être ignorée silencieusement
+ */
+const isNotFoundError = (error: any): boolean => {
+  if (!error) return false;
+  return (
+    error.code === 'PGRST116' ||
+    error.message?.includes('No rows') ||
+    error.message?.includes('not found') ||
+    error.message?.includes('NOT_FOUND') ||
+    error.code === 'NOT_FOUND'
+  );
+};
+
+// ============================================
 // FONCTIONS POUR LES OFFRES D'EMPLOI
 // ============================================
 
@@ -143,6 +162,10 @@ export const getJobOfferById = async (id: string): Promise<JobOffer | null> => {
       .single();
 
     if (error) {
+      // Ignorer les erreurs 404 (NOT_FOUND) silencieusement
+      if (isNotFoundError(error)) {
+        return null;
+      }
       console.error('Error fetching job offer:', error);
       return null;
     }
@@ -525,7 +548,7 @@ export const getCompanyApplications = async (companyId: string): Promise<any[]> 
       .from('applications')
       .select(`
         *,
-        job_offers!inner (
+        job_offers (
           id,
           title,
           company_id,
@@ -543,20 +566,29 @@ export const getCompanyApplications = async (companyId: string): Promise<any[]> 
           )
         )
       `)
-      .eq('job_offers.company_id', companyId)
       .order('created_at', { ascending: false });
 
     if (applicationsError) {
+      // Ignorer les erreurs 404 silencieusement
+      if (isNotFoundError(applicationsError)) {
+        return [];
+      }
       console.error('Error fetching company applications:', applicationsError);
       return [];
     }
 
-    if (!applicationsData || applicationsData.length === 0) {
+    // Filtrer les applications pour cette entreprise
+    const filteredApplications = (applicationsData || []).filter((app: any) => {
+      const jobOffer = Array.isArray(app.job_offers) ? app.job_offers[0] : app.job_offers;
+      return jobOffer?.company_id === companyId;
+    });
+
+    if (!filteredApplications || filteredApplications.length === 0) {
       return [];
     }
 
     // Récupérer les Decision DNA pour toutes les candidatures
-    const applicationIds = applicationsData.map((app: any) => app.id);
+    const applicationIds = filteredApplications.map((app: any) => app.id);
     const { data: dnaData, error: dnaError } = await supabase
       .from('candidate_decision_dna')
       .select('application_id, decision_dna, compatibility_score')
@@ -578,7 +610,7 @@ export const getCompanyApplications = async (companyId: string): Promise<any[]> 
     }
 
     // Mapper les données avec les Decision DNA
-    return applicationsData.map((app: any) => {
+    return filteredApplications.map((app: any) => {
       const dna = dnaMap.get(app.id);
       
       return {
@@ -642,7 +674,8 @@ export const getApplicationById = async (applicationId: string): Promise<{ candi
       .from('applications')
       .select(`
         candidate_id,
-        job_offers!inner (
+        job_offer_id,
+        job_offers (
           company_id
         )
       `)
@@ -650,6 +683,10 @@ export const getApplicationById = async (applicationId: string): Promise<{ candi
       .single();
 
     if (error) {
+      // Ignorer les erreurs 404 (NOT_FOUND) silencieusement
+      if (isNotFoundError(error)) {
+        return null;
+      }
       console.error('Error fetching application:', error);
       return null;
     }
@@ -657,6 +694,26 @@ export const getApplicationById = async (applicationId: string): Promise<{ candi
     if (!data) return null;
 
     const jobOffer = Array.isArray(data.job_offers) ? data.job_offers[0] : data.job_offers;
+
+    // Si pas de job_offers, essayer de récupérer le company_id depuis job_offers directement
+    if (!jobOffer?.company_id && data.job_offer_id) {
+      try {
+        const { data: jobData } = await supabase
+          .from('job_offers')
+          .select('company_id')
+          .eq('id', data.job_offer_id)
+          .single();
+        
+        if (jobData?.company_id) {
+          return {
+            candidateId: data.candidate_id,
+            companyId: jobData.company_id,
+          };
+        }
+      } catch (e) {
+        // Ignorer les erreurs silencieusement
+      }
+    }
 
     return {
       candidateId: data.candidate_id,
@@ -681,6 +738,10 @@ export const getMessages = async (applicationId: string): Promise<Message[]> => 
       .order('created_at', { ascending: true });
 
     if (error) {
+      // Ignorer les erreurs 404 silencieusement
+      if (isNotFoundError(error)) {
+        return [];
+      }
       console.error('Error fetching messages:', error);
       return [];
     }
@@ -935,6 +996,10 @@ export const getCandidateProfile = async (candidateId: string): Promise<Candidat
       .single();
 
     if (error) {
+      // Ignorer les erreurs 404 (NOT_FOUND) silencieusement
+      if (isNotFoundError(error)) {
+        return null;
+      }
       console.error('Error fetching candidate profile:', error);
       return null;
     }
@@ -1023,6 +1088,10 @@ export const getCompanyProfile = async (companyId: string): Promise<Company | nu
       .single();
 
     if (error) {
+      // Ignorer les erreurs 404 (NOT_FOUND) silencieusement
+      if (isNotFoundError(error)) {
+        return null;
+      }
       console.error('Error fetching company profile:', error);
       return null;
     }
@@ -1154,6 +1223,10 @@ export const isCandidateCertified = async (candidateId: string): Promise<boolean
       .single();
 
     if (error) {
+      // Ignorer les erreurs 404 (NOT_FOUND) silencieusement
+      if (isNotFoundError(error)) {
+        return false;
+      }
       console.error('Error checking candidate certification status:', error);
       return false;
     }
@@ -1294,6 +1367,10 @@ export const getCandidateDecisionDNA = async (applicationId: string): Promise<Ca
       .single();
 
     if (error) {
+      // Ignorer les erreurs 404 (NOT_FOUND) silencieusement
+      if (isNotFoundError(error)) {
+        return null;
+      }
       console.error('Error fetching candidate Decision DNA:', error);
       return null;
     }

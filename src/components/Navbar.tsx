@@ -13,14 +13,6 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from './ThemeToggle';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -104,6 +96,15 @@ export const Navbar = () => {
     { icon: User, label: 'Mon profil', path: '/candidate/profile' },
   ];
 
+  // Menu items pour entreprises (admin)
+  const companyMenuItems = [
+    { icon: Home, label: 'Tableau de bord', path: '/company/dashboard' },
+    { icon: FileText, label: 'Mes offres', path: '/company/jobs' },
+    { icon: User, label: 'Candidatures', path: '/company/applications' },
+    { icon: MessageSquare, label: 'Messages', path: '/company/messages' },
+    { icon: Shield, label: 'Mon profil', path: '/company/profile' },
+  ];
+
   return (
     <>
       <nav className="bg-card/98 backdrop-blur-md border-b border-border/60 sticky top-0 z-50 shadow-sm">
@@ -125,8 +126,8 @@ export const Navbar = () => {
               </span>
             </Link>
 
-            {/* Menu Button pour candidats */}
-            {candidate && (
+            {/* Menu Button pour candidats et entreprises */}
+            {(candidate || company) && (
               <div className="flex items-center gap-2">
                 <ThemeToggle />
                 <Button
@@ -140,52 +141,12 @@ export const Navbar = () => {
                 </Button>
               </div>
             )}
-
-            {/* Menu Dropdown pour entreprises */}
-            {company && (
-              <div className="flex items-center gap-3">
-                <ThemeToggle />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Menu className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem asChild>
-                      <Link to="/company/jobs" className="cursor-pointer">
-                        Mes offres
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/company/applications" className="cursor-pointer">
-                        Candidatures
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/company/messages" className="cursor-pointer">
-                        Messages
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/company/profile" className="cursor-pointer">
-                        Mon profil
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-                      Déconnexion
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
           </div>
         </div>
       </nav>
 
-      {/* Menu Fullscreen pour candidats */}
-      {candidate && (
+      {/* Menu Fullscreen pour candidats et entreprises */}
+      {(candidate || company) && (
         <>
           <div
             ref={menuRef}
@@ -208,7 +169,7 @@ export const Navbar = () => {
               {/* Header */}
               <div className="flex justify-between items-center px-8 sm:px-12 pt-8 pb-6">
                 <Link 
-                  to="/candidate/dashboard" 
+                  to={candidate ? '/candidate/dashboard' : '/company/dashboard'} 
                   onClick={toggleMenu}
                   className="text-xl font-serif font-semibold text-foreground hover:text-primary transition-colors tracking-tight"
                 >
@@ -228,7 +189,7 @@ export const Navbar = () => {
                 {/* Left Column - Navigation */}
                 <nav className="flex-1 lg:max-w-xl pt-8 lg:pt-16">
                   <div className="space-y-2">
-                    {candidateMenuItems.map((item) => {
+                    {(candidate ? candidateMenuItems : companyMenuItems).map((item) => {
                       const isActive = location.pathname === item.path;
                       
                       return (
@@ -261,7 +222,7 @@ export const Navbar = () => {
 
                 {/* Right Column - Additional Info */}
                 <div className="lg:w-80 lg:pt-16 space-y-12 mt-12 lg:mt-0">
-                  {/* Profil Certifié */}
+                  {/* Profil Certifié pour candidats */}
                   {candidate?.certified && (
                     <div className="space-y-4">
                       <div className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">
@@ -270,6 +231,19 @@ export const Navbar = () => {
                       <div className="flex items-center gap-2">
                         <Shield className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium text-foreground">Profil certifié</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Info entreprise */}
+                  {company && (
+                    <div className="space-y-4">
+                      <div className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+                        Entreprise
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium text-foreground">{company.name}</span>
                       </div>
                     </div>
                   )}
