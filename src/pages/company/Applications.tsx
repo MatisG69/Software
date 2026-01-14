@@ -147,8 +147,8 @@ export const CompanyApplications = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <CardTitle className="text-3xl">Candidatures</CardTitle>
+      <div className="space-y-4 sm:space-y-6">
+        <CardTitle className="text-2xl sm:text-3xl">Candidatures</CardTitle>
 
         <Alert>
           <AlertDescription>
@@ -160,10 +160,11 @@ export const CompanyApplications = () => {
 
         <Tabs defaultValue="list" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="list">Liste des candidatures</TabsTrigger>
-            <TabsTrigger value="ranking" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Classement Decision DNA
+            <TabsTrigger value="list" className="text-xs sm:text-sm">Liste des candidatures</TabsTrigger>
+            <TabsTrigger value="ranking" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Classement Decision DNA</span>
+              <span className="sm:hidden">Classement</span>
             </TabsTrigger>
           </TabsList>
 
@@ -191,27 +192,30 @@ export const CompanyApplications = () => {
               applications.map((application) => (
                 <Card key={application.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-4 mb-2">
-                          <CardTitle className="text-xl">{application.jobOffer?.title}</CardTitle>
-                          <Badge variant={getStatusVariant(application.status)} className="flex items-center gap-2">
-                            {getStatusIcon(application.status)}
-                            {getStatusLabel(application.status)}
-                          </Badge>
-                          {application.candidate?.certified && (
-                            <Badge variant="default" className="bg-green-100 text-green-700">
-                              ✓ Certifié
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
+                          <CardTitle className="text-lg sm:text-xl break-words">{application.jobOffer?.title}</CardTitle>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant={getStatusVariant(application.status)} className="flex items-center gap-1 sm:gap-2 text-xs">
+                              {getStatusIcon(application.status)}
+                              {getStatusLabel(application.status)}
                             </Badge>
-                          )}
-                          {application.decisionDNA?.compatibilityScore !== undefined && (
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <Target className="w-3 h-3" />
-                              Compatibilité: {formatCompatibilityScore(application.decisionDNA.compatibilityScore)}
-                            </Badge>
-                          )}
+                            {application.candidate?.certified && (
+                              <Badge variant="default" className="bg-green-100 text-green-700 text-xs">
+                                ✓ Certifié
+                              </Badge>
+                            )}
+                            {application.decisionDNA?.compatibilityScore !== undefined && (
+                              <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                                <Target className="w-3 h-3" />
+                                <span className="hidden sm:inline">Compatibilité: {formatCompatibilityScore(application.decisionDNA.compatibilityScore)}</span>
+                                <span className="sm:hidden">{formatCompatibilityScore(application.decisionDNA.compatibilityScore)}</span>
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <CardDescription className="mb-4">
+                        <CardDescription className="mb-4 text-sm">
                           Candidature reçue le{' '}
                           {new Date(application.createdAt).toLocaleDateString('fr-FR')}
                         </CardDescription>
@@ -219,27 +223,27 @@ export const CompanyApplications = () => {
                         {/* Candidate Info (Anonymized) */}
                         {application.candidate && (
                           <Card className="bg-muted mb-4">
-                            <CardContent className="pt-6">
-                              <div className="grid md:grid-cols-2 gap-4">
+                            <CardContent className="pt-4 sm:pt-6">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                  <CardDescription className="text-sm font-semibold mb-2">Expérience</CardDescription>
-                                  <p className="text-foreground">{application.candidate.experience} ans</p>
+                                  <CardDescription className="text-xs sm:text-sm font-semibold mb-2">Expérience</CardDescription>
+                                  <p className="text-foreground text-sm sm:text-base">{application.candidate.experience} ans</p>
                                 </div>
                                 <div>
-                                  <CardDescription className="text-sm font-semibold mb-2">Formation</CardDescription>
-                                  <p className="text-foreground">{application.candidate.education}</p>
+                                  <CardDescription className="text-xs sm:text-sm font-semibold mb-2">Formation</CardDescription>
+                                  <p className="text-foreground text-sm sm:text-base break-words">{application.candidate.education}</p>
                                 </div>
-                                <div className="md:col-span-2">
-                                  <CardDescription className="text-sm font-semibold mb-2">Compétences</CardDescription>
+                                <div className="sm:col-span-2">
+                                  <CardDescription className="text-xs sm:text-sm font-semibold mb-2">Compétences</CardDescription>
                                   <div className="flex flex-wrap gap-2">
                                     {application.skills && application.skills.length > 0 ? (
                                       application.skills.map((skill: string, idx: number) => (
-                                        <Badge key={idx} variant="secondary">
+                                        <Badge key={idx} variant="secondary" className="text-xs">
                                           {skill}
                                         </Badge>
                                       ))
                                     ) : (
-                                      <p className="text-sm text-muted-foreground">Aucune compétence spécifiée</p>
+                                      <p className="text-xs sm:text-sm text-muted-foreground">Aucune compétence spécifiée</p>
                                     )}
                                   </div>
                                 </div>
@@ -251,27 +255,33 @@ export const CompanyApplications = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-end gap-2 flex-wrap">
+                    <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
                       <Button
                         variant={application.status === 'pending' ? 'default' : 'outline'}
                         onClick={() => handleStatusChange(application.id, 'pending')}
+                        size="sm"
+                        className="w-full sm:w-auto"
                       >
                         En attente
                       </Button>
                       <Button
                         variant={application.status === 'reviewed' ? 'default' : 'outline'}
                         onClick={() => handleStatusChange(application.id, 'reviewed')}
+                        size="sm"
+                        className="w-full sm:w-auto"
                       >
                         Entretien
                       </Button>
                       <Button
                         variant={application.status === 'rejected' ? 'destructive' : 'outline'}
                         onClick={() => handleStatusChange(application.id, 'rejected')}
+                        size="sm"
+                        className="w-full sm:w-auto"
                       >
                         Refuser
                       </Button>
-                      <Button variant="outline" asChild>
-                        <Link to={`/company/messages?application=${application.id}`} className="flex items-center gap-2">
+                      <Button variant="outline" asChild size="sm" className="w-full sm:w-auto">
+                        <Link to={`/company/messages?application=${application.id}`} className="flex items-center justify-center gap-2">
                           <MessageSquare className="w-4 h-4" />
                           <span>Messages</span>
                         </Link>
@@ -305,16 +315,16 @@ export const CompanyApplications = () => {
               jobsWithDecisionDNA.map((job) => (
                 <Card key={job.jobId} className="border-2 border-primary/20">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Award className="w-6 h-6 text-primary" />
-                        <CardTitle className="text-2xl">{job.jobTitle}</CardTitle>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <Award className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+                        <CardTitle className="text-lg sm:text-2xl break-words">{job.jobTitle}</CardTitle>
                       </div>
-                      <Badge variant="outline" className="text-sm">
+                      <Badge variant="outline" className="text-xs sm:text-sm w-fit">
                         {job.applications.length} candidat{job.applications.length > 1 ? 's' : ''}
                       </Badge>
                     </div>
-                    <CardDescription className="mt-2">
+                    <CardDescription className="mt-2 text-xs sm:text-sm">
                       Classement basé sur la compatibilité Decision DNA avec le profil cible du poste
                     </CardDescription>
                   </CardHeader>
@@ -329,20 +339,20 @@ export const CompanyApplications = () => {
                               index === 0 ? 'border-2 border-primary bg-primary/5' : 'border'
                             }`}
                           >
-                            <CardContent className="pt-6">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-start gap-4 flex-1">
-                                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary font-bold text-lg">
+                            <CardContent className="pt-4 sm:pt-6">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                                  <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 text-primary font-bold text-base sm:text-lg flex-shrink-0">
                                     {index + 1}
                                   </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-3">
-                                      <Badge variant={getStatusVariant(application.status)} className="flex items-center gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                                      <Badge variant={getStatusVariant(application.status)} className="flex items-center gap-1 sm:gap-2 text-xs">
                                         {getStatusIcon(application.status)}
                                         {getStatusLabel(application.status)}
                                       </Badge>
                                       {application.candidate?.certified && (
-                                        <Badge variant="default" className="bg-green-100 text-green-700">
+                                        <Badge variant="default" className="bg-green-100 text-green-700 text-xs">
                                           ✓ Certifié
                                         </Badge>
                                       )}
@@ -350,17 +360,17 @@ export const CompanyApplications = () => {
 
                                     {/* Candidate Info (Anonymized) */}
                                     {application.candidate && (
-                                      <div className="grid md:grid-cols-3 gap-4 mb-4">
+                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
                                         <div>
-                                          <p className="text-sm text-muted-foreground mb-1">Expérience</p>
-                                          <p className="font-medium">{application.candidate.experience} ans</p>
+                                          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Expérience</p>
+                                          <p className="font-medium text-sm sm:text-base">{application.candidate.experience} ans</p>
                                         </div>
                                         <div>
-                                          <p className="text-sm text-muted-foreground mb-1">Formation</p>
-                                          <p className="font-medium">{application.candidate.education}</p>
+                                          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Formation</p>
+                                          <p className="font-medium text-sm sm:text-base break-words">{application.candidate.education}</p>
                                         </div>
                                         <div>
-                                          <p className="text-sm text-muted-foreground mb-1">Compétences</p>
+                                          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Compétences</p>
                                           <div className="flex flex-wrap gap-1">
                                             {application.skills && application.skills.length > 0 ? (
                                               <>
@@ -386,8 +396,8 @@ export const CompanyApplications = () => {
                                     {/* Decision DNA Score */}
                                     <div className="space-y-2">
                                       <div className="flex items-center justify-between">
-                                        <span className="text-sm font-semibold">Score de compatibilité</span>
-                                        <span className={`text-lg font-bold ${getScoreColor(score)}`}>
+                                        <span className="text-xs sm:text-sm font-semibold">Score de compatibilité</span>
+                                        <span className={`text-base sm:text-lg font-bold ${getScoreColor(score)}`}>
                                           {formatCompatibilityScore(score)}
                                         </span>
                                       </div>
@@ -396,29 +406,32 @@ export const CompanyApplications = () => {
                                   </div>
                                 </div>
 
-                                <div className="flex flex-col gap-2 min-w-[200px]">
+                                <div className="flex flex-row sm:flex-col gap-2 sm:min-w-[200px]">
                                   <Button
                                     variant={application.status === 'reviewed' ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => handleStatusChange(application.id, 'reviewed')}
-                                    className="w-full"
+                                    className="flex-1 sm:w-full"
                                   >
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Entretien
+                                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    <span className="hidden sm:inline">Entretien</span>
+                                    <span className="sm:hidden">Entretien</span>
                                   </Button>
                                   <Button
                                     variant={application.status === 'rejected' ? 'destructive' : 'outline'}
                                     size="sm"
                                     onClick={() => handleStatusChange(application.id, 'rejected')}
-                                    className="w-full"
+                                    className="flex-1 sm:w-full"
                                   >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Refuser
+                                    <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                    <span className="hidden sm:inline">Refuser</span>
+                                    <span className="sm:hidden">Refuser</span>
                                   </Button>
-                                  <Button variant="outline" size="sm" asChild className="w-full">
-                                    <Link to={`/company/messages?application=${application.id}`}>
-                                      <MessageSquare className="w-4 h-4 mr-2" />
-                                      Messages
+                                  <Button variant="outline" size="sm" asChild className="flex-1 sm:w-full">
+                                    <Link to={`/company/messages?application=${application.id}`} className="flex items-center justify-center">
+                                      <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                      <span className="hidden sm:inline">Messages</span>
+                                      <span className="sm:hidden">Msg</span>
                                     </Link>
                                   </Button>
                                 </div>

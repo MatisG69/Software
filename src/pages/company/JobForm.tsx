@@ -220,8 +220,8 @@ export const CompanyJobForm = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <Button variant="ghost" asChild>
+      <div className="space-y-4 sm:space-y-6">
+        <Button variant="ghost" asChild className="w-full sm:w-auto">
           <Link to="/company/jobs" className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             <span>Retour aux offres</span>
@@ -230,7 +230,7 @@ export const CompanyJobForm = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-3xl">
+            <CardTitle className="text-2xl sm:text-3xl">
               {isEdit ? 'Modifier l\'offre' : 'Nouvelle offre d\'emploi'}
             </CardTitle>
           </CardHeader>
@@ -294,7 +294,7 @@ export const CompanyJobForm = () => {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <Label htmlFor="location">Lieu de l'emploi *</Label>
                   <Input
@@ -304,6 +304,7 @@ export const CompanyJobForm = () => {
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     required
                     placeholder="Paris, Lyon, Remote..."
+                    className="mt-2"
                   />
                 </div>
 
@@ -319,7 +320,7 @@ export const CompanyJobForm = () => {
                     }
                     required
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="mt-2">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -331,14 +332,14 @@ export const CompanyJobForm = () => {
                   </Select>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <Label htmlFor="category">Catégorie *</Label>
                   <Select
                     value={formData.category}
                     onValueChange={(value) => setFormData({ ...formData, category: value })}
                     required
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="mt-2">
                       <SelectValue placeholder="Sélectionnez une catégorie" />
                     </SelectTrigger>
                     <SelectContent>
@@ -355,7 +356,7 @@ export const CompanyJobForm = () => {
 
               <div>
                 <Label>Salaire (optionnel)</Label>
-                <div className="grid md:grid-cols-3 gap-4 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
                   <div>
                     <Input
                       type="number"
@@ -457,8 +458,8 @@ export const CompanyJobForm = () => {
 
               {/* Section Decision DNA */}
               <div className="border-t pt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex-1">
                     <h3 className="text-lg font-semibold">Decision DNA</h3>
                     <p className="text-sm text-muted-foreground">
                       Activez un test de profil décisionnel pour évaluer la compatibilité comportementale
@@ -478,7 +479,7 @@ export const CompanyJobForm = () => {
                       }
                       className="w-4 h-4"
                     />
-                    <Label htmlFor="decisionDNAEnabled" className="cursor-pointer">
+                    <Label htmlFor="decisionDNAEnabled" className="cursor-pointer text-sm sm:text-base">
                       Activer Decision DNA
                     </Label>
                   </div>
@@ -516,7 +517,7 @@ export const CompanyJobForm = () => {
                           </p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="rapidité">Rapidité de décision</Label>
                             <Select
@@ -531,7 +532,7 @@ export const CompanyJobForm = () => {
                                 })
                               }
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-2">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -556,7 +557,7 @@ export const CompanyJobForm = () => {
                                 })
                               }
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-2">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -581,7 +582,7 @@ export const CompanyJobForm = () => {
                                 })
                               }
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-2">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -606,7 +607,7 @@ export const CompanyJobForm = () => {
                                 })
                               }
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-2">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -638,11 +639,11 @@ export const CompanyJobForm = () => {
                 </AlertDescription>
               </Alert>
 
-              <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" asChild>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
+                <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
                   <Link to="/company/jobs">Annuler</Link>
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                   <Save className="w-4 h-4 mr-2" />
                   {loading ? 'Enregistrement...' : isEdit ? 'Enregistrer' : 'Publier'}
                 </Button>

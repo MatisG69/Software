@@ -45,12 +45,12 @@ export const CompanyJobs = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-3xl">Mes offres d'emploi</CardTitle>
-          <Button asChild size="lg">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <CardTitle className="text-2xl sm:text-3xl">Mes offres d'emploi</CardTitle>
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link to="/company/jobs/new">
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               Nouvelle offre
             </Link>
           </Button>
@@ -78,31 +78,35 @@ export const CompanyJobs = () => {
             jobs.map((job) => (
               <Card key={job.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-2">
-                        <CardTitle className="text-xl">{job.title}</CardTitle>
-                        <Badge variant="outline">{job.category}</Badge>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
+                        <CardTitle className="text-lg sm:text-xl break-words">{job.title}</CardTitle>
+                        <Badge variant="outline" className="w-fit">{job.category}</Badge>
                       </div>
-                      <CardDescription className="line-clamp-2 mb-4">{job.description}</CardDescription>
-                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                        <span>{job.location}</span>
-                        <span>{job.type}</span>
+                      <CardDescription className="line-clamp-2 mb-4 text-sm">{job.description}</CardDescription>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <span>{job.location}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span>{job.type}</span>
+                        </span>
                       </div>
                     </div>
-                    <div className="ml-6 flex gap-2">
-                      <Button variant="outline" size="icon" asChild>
+                    <div className="flex gap-2 sm:ml-6">
+                      <Button variant="outline" size="icon" asChild className="flex-shrink-0">
                         <Link to={`/company/jobs/${job.id}/edit`}>
-                          <Edit className="w-5 h-5" />
+                          <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
                         </Link>
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => handleDelete(job.id)}
-                        className="border-destructive/30 hover:bg-destructive/10"
+                        className="border-destructive/30 hover:bg-destructive/10 flex-shrink-0"
                       >
-                        <Trash2 className="w-5 h-5 text-destructive" />
+                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
                       </Button>
                     </div>
                   </div>

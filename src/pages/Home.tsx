@@ -7,22 +7,22 @@ export const Home = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-foreground mb-6">
+      <div className="container mx-auto px-4 py-12 sm:py-20">
+        <div className="text-center mb-12 sm:mb-16">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 sm:mb-6">
             Recrutement 100% Anonyme
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             Postulez sans discrimination. Les entreprises évaluent uniquement vos compétences,
             jamais votre identité.
           </p>
-          <div className="flex justify-center gap-4">
-            <Button asChild size="lg">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link to="/register">
                 Commencer maintenant
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link to="/login">
                 Se connecter
               </Link>
@@ -31,7 +31,7 @@ export const Home = () => {
         </div>
 
         {/* Features */}
-        <div className="grid md:grid-cols-3 gap-8 mt-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mt-12 sm:mt-20">
           <Card>
             <CardHeader>
               <Shield className="w-12 h-12 text-primary mb-4" />
@@ -71,12 +71,12 @@ export const Home = () => {
         </div>
 
         {/* How it works */}
-        <Card className="mt-20">
+        <Card className="mt-12 sm:mt-20">
           <CardHeader>
-            <CardTitle className="text-3xl text-center">Comment ça fonctionne ?</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl text-center">Comment ça fonctionne ?</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
               <div className="text-center">
                 <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                   1

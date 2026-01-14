@@ -122,15 +122,15 @@ export const CompanyProfile = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-3xl">Profil de l'entreprise</CardTitle>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <CardTitle className="text-2xl sm:text-3xl">Profil de l'entreprise</CardTitle>
           {!editing ? (
-            <Button onClick={() => setEditing(true)}>
+            <Button onClick={() => setEditing(true)} className="w-full sm:w-auto">
               Modifier
             </Button>
           ) : (
-            <Button onClick={handleSave} disabled={loading}>
+            <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
               <Save className="w-4 h-4 mr-2" />
               {loading ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
@@ -139,11 +139,11 @@ export const CompanyProfile = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Informations de l'entreprise</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Informations de l'entreprise</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <Label htmlFor="name">Nom de l'entreprise</Label>
                   {editing ? (
