@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { Briefcase, Search, CheckCircle, Shield, Lock, Users } from 'lucide-react';
@@ -9,15 +9,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { getCandidateStats } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 
 export const CandidateDashboard = () => {
   const { candidate } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     applications: 0,
     interviews: 0,
     matches: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -46,7 +49,33 @@ export const CandidateDashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-8 pb-12">
+      <style>{`
+        @keyframes pageTransition3D {
+          0% {
+            transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1);
+            opacity: 1;
+          }
+          30% {
+            transform: perspective(1200px) rotateY(-15deg) rotateX(8deg) scale(0.92);
+            opacity: 0.9;
+          }
+          60% {
+            transform: perspective(1200px) rotateY(15deg) rotateX(-8deg) scale(0.95);
+            opacity: 0.7;
+          }
+          100% {
+            transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(0.85);
+            opacity: 0;
+          }
+        }
+        .page-transition-3d {
+          animation: pageTransition3D 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          transform-style: preserve-3d;
+          transform-origin: center center;
+          backface-visibility: hidden;
+        }
+      `}</style>
+      <div className={cn("space-y-8 pb-12", isAnimating && "page-transition-3d")}>
         {/* Header */}
         <Card className="border-0 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent">
           <CardContent className="pt-6">
@@ -130,25 +159,33 @@ export const CandidateDashboard = () => {
             <p className="text-sm text-muted-foreground mt-1">Accédez rapidement aux fonctionnalités principales</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all hover:shadow-xl cursor-pointer">
-              <Link to="/candidate/jobs" className="block">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CardHeader className="relative">
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 p-4 group-hover:scale-110 transition-transform">
-                      <Search className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                        Rechercher un emploi
-                      </CardTitle>
-                      <CardDescription className="text-sm">
-                        Trouvez des offres adaptées à votre profil
-                      </CardDescription>
-                    </div>
+            <Card 
+              className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all hover:shadow-xl cursor-pointer"
+              onClick={() => {
+                if (!isAnimating) {
+                  setIsAnimating(true);
+                  setTimeout(() => {
+                    navigate('/candidate/jobs');
+                  }, 500);
+                }
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CardHeader className="relative">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 p-4 group-hover:scale-110 transition-transform">
+                    <Search className="h-6 w-6 text-primary" />
                   </div>
-                </CardHeader>
-              </Link>
+                  <div className="flex-1 space-y-1">
+                    <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                      Rechercher un emploi
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Trouvez des offres adaptées à votre profil
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
             </Card>
             
             <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all hover:shadow-xl cursor-pointer">
