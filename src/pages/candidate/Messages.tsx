@@ -20,7 +20,32 @@ export const CandidateMessages = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [showConversations, setShowConversations] = useState(window.innerWidth >= 768);
+  const [showConversations, setShowConversations] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkWidth = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (window.innerWidth >= 768) {
+        setShowConversations(true);
+      } else {
+        // Sur mobile, afficher la liste si aucune conversation n'est sélectionnée
+        setShowConversations(!selectedConversation);
+      }
+    };
+    
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+    return () => window.removeEventListener('resize', checkWidth);
+  }, [selectedConversation]);
+
+  // Sur mobile, afficher la liste si aucune conversation n'est sélectionnée
+  useEffect(() => {
+    if (isMobile && !selectedConversation && conversations.length > 0) {
+      setShowConversations(true);
+    }
+  }, [selectedConversation, conversations.length, isMobile]);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -150,16 +175,16 @@ export const CandidateMessages = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row h-[calc(100vh-200px)] gap-4">
+      <div className="flex flex-col md:flex-row min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] gap-4">
         {/* Conversations List */}
-        <Card className={`${showConversations ? 'flex' : 'hidden'} md:flex w-full md:w-1/3 lg:w-1/4 flex-col`}>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl md:text-2xl">Messages</CardTitle>
+        <Card className={`${showConversations ? 'flex' : 'hidden'} md:flex w-full md:w-1/3 lg:w-1/4 flex-col max-h-[calc(100vh-200px)] md:max-h-none`}>
+          <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl md:text-2xl">Messages</CardTitle>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowConversations(false)}
-              className="md:hidden"
+              className="md:hidden flex-shrink-0"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -176,24 +201,24 @@ export const CandidateMessages = () => {
                   key={conversation.id}
                   onClick={() => {
                     setSelectedConversation(conversation.id);
-                    if (window.innerWidth < 768) {
+                    if (isMobile) {
                       setShowConversations(false);
                     }
                   }}
-                  className={`w-full p-4 text-left hover:bg-muted transition border-b border-border ${
+                  className={`w-full p-3 sm:p-4 text-left hover:bg-muted transition border-b border-border ${
                     selectedConversation === conversation.id ? 'bg-accent/50' : ''
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-foreground">{conversation.jobTitle}</h3>
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base break-words flex-1">{conversation.jobTitle}</h3>
                     {conversation.unread > 0 && (
-                      <Badge variant="destructive" className="ml-2">
+                      <Badge variant="destructive" className="ml-2 flex-shrink-0 text-xs">
                         {conversation.unread}
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-1">{conversation.company}</p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{conversation.lastMessage}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1 line-clamp-1">{conversation.company}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{conversation.lastMessage}</p>
                 </button>
               ))
             )}
@@ -201,33 +226,33 @@ export const CandidateMessages = () => {
         </Card>
 
         {/* Messages */}
-        <Card className="flex-1 flex flex-col min-h-0">
+        <Card className={`flex-1 flex flex-col min-h-0 ${!selectedConv && isMobile ? 'hidden' : ''}`}>
           {selectedConv ? (
             <>
-              <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
-                <div className="flex-1">
+              <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4 p-4 sm:p-6">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowConversations(true)}
-                      className="md:hidden -ml-2"
+                      className="md:hidden -ml-2 flex-shrink-0"
                     >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      <ArrowLeft className="w-4 h-4" />
                     </Button>
-                    <CardTitle className="text-lg md:text-xl break-words">{selectedConv.jobTitle}</CardTitle>
+                    <CardTitle className="text-base sm:text-lg md:text-xl break-words">{selectedConv.jobTitle}</CardTitle>
                   </div>
-                  <CardDescription className="text-sm">{selectedConv.company}</CardDescription>
+                  <CardDescription className="text-xs sm:text-sm break-words">{selectedConv.company}</CardDescription>
                   <CardDescription className="text-xs mt-2">
                     💬 Communication anonyme - Votre identité reste protégée
                   </CardDescription>
                 </div>
               </CardHeader>
               <Separator />
-              <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30">
+              <CardContent className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-muted/30">
                 {messages.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground">Aucun message dans cette conversation</p>
+                    <p className="text-muted-foreground text-sm sm:text-base">Aucun message dans cette conversation</p>
                   </div>
                 ) : (
                   messages.map((message) => (
@@ -244,8 +269,8 @@ export const CandidateMessages = () => {
                             : 'bg-card'
                         }`}
                       >
-                        <CardContent className="p-4">
-                          <p className="text-sm">{message.content}</p>
+                        <CardContent className="p-3 sm:p-4">
+                          <p className="text-xs sm:text-sm break-words">{message.content}</p>
                           <p
                             className={`text-xs mt-2 ${
                               message.senderId === candidate?.id
@@ -262,27 +287,40 @@ export const CandidateMessages = () => {
                 )}
               </CardContent>
               <Separator />
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex gap-2">
                   <Input
                     type="text"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    onKeyPress={(e) => e.key === 'Enter' && !sending && handleSendMessage()}
                     placeholder="Tapez votre message..."
                     disabled={sending}
+                    className="text-sm sm:text-base"
                   />
-                  <Button onClick={handleSendMessage} size="icon" disabled={sending}>
+                  <Button onClick={handleSendMessage} size="icon" disabled={sending || !messageText.trim()} className="flex-shrink-0">
                     <Send className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>
             </>
           ) : (
-            <CardContent className="flex-1 flex items-center justify-center">
+            <CardContent className="flex-1 flex items-center justify-center p-4">
               <div className="text-center">
-                <MessageSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Sélectionnez une conversation</p>
+                <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground text-sm sm:text-base mb-4">Sélectionnez une conversation</p>
+                {conversations.length === 0 && (
+                  <p className="text-xs sm:text-sm text-muted-foreground">Aucune conversation disponible</p>
+                )}
+                {isMobile && conversations.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowConversations(true)}
+                    className="mt-4"
+                  >
+                    Voir les conversations
+                  </Button>
+                )}
               </div>
             </CardContent>
           )}

@@ -131,26 +131,37 @@ export const CompanyMessages = () => {
   }
 
   const [showConversations, setShowConversations] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkWidth = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
       if (window.innerWidth >= 768) {
         setShowConversations(true);
       } else {
-        setShowConversations(false);
+        // Sur mobile, afficher la liste si aucune conversation n'est sélectionnée
+        setShowConversations(!selectedConversation);
       }
     };
     
     checkWidth();
     window.addEventListener('resize', checkWidth);
     return () => window.removeEventListener('resize', checkWidth);
-  }, []);
+  }, [selectedConversation]);
+
+  // Sur mobile, afficher la liste si aucune conversation n'est sélectionnée
+  useEffect(() => {
+    if (isMobile && !selectedConversation && conversations.length > 0) {
+      setShowConversations(true);
+    }
+  }, [selectedConversation, conversations.length, isMobile]);
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] gap-4">
+      <div className="flex flex-col md:flex-row min-h-[calc(100vh-180px)] sm:min-h-[calc(100vh-200px)] gap-4">
         {/* Conversations List */}
-        <Card className={`${showConversations ? 'flex' : 'hidden'} md:flex w-full md:w-1/3 lg:w-1/4 flex-col`}>
+        <Card className={`${showConversations ? 'flex' : 'hidden'} md:flex w-full md:w-1/3 lg:w-1/4 flex-col max-h-[calc(100vh-200px)] md:max-h-none`}>
           <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
             <CardTitle className="text-lg sm:text-xl md:text-2xl">Messages</CardTitle>
             <Button
@@ -174,7 +185,7 @@ export const CompanyMessages = () => {
                   key={conversation.id}
                   onClick={() => {
                     setSelectedConversation(conversation.id);
-                    if (window.innerWidth < 768) {
+                    if (isMobile) {
                       setShowConversations(false);
                     }
                   }}
@@ -199,7 +210,7 @@ export const CompanyMessages = () => {
         </Card>
 
         {/* Messages */}
-        <Card className="flex-1 flex flex-col min-h-0">
+        <Card className={`flex-1 flex flex-col min-h-0 ${!selectedConv && isMobile ? 'hidden' : ''}`}>
           {selectedConv ? (
             <>
               <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4 p-4 sm:p-6">
@@ -278,10 +289,22 @@ export const CompanyMessages = () => {
               </CardContent>
             </>
           ) : (
-            <CardContent className="flex-1 flex items-center justify-center">
+            <CardContent className="flex-1 flex items-center justify-center p-4">
               <div className="text-center">
-                <MessageSquare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Sélectionnez une conversation</p>
+                <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground text-sm sm:text-base mb-4">Sélectionnez une conversation</p>
+                {conversations.length === 0 && (
+                  <p className="text-xs sm:text-sm text-muted-foreground">Aucune conversation disponible</p>
+                )}
+                {isMobile && conversations.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowConversations(true)}
+                    className="mt-4"
+                  >
+                    Voir les conversations
+                  </Button>
+                )}
               </div>
             </CardContent>
           )}
