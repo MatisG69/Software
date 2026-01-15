@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, X, Bot, User, Minimize2 } from 'lucide-react';
+import { Send, X, Bot, User, Minimize2, Sparkles, MessageSquare } from 'lucide-react';
 import { sendMessageToGroq, ChatMessage } from '@/lib/groq';
 import { cn } from '@/lib/utils';
 
@@ -160,14 +160,17 @@ TON RÔLE :
             animation: buttonPulse 2s ease-in-out infinite;
           }
         `}</style>
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
           <Button
             onClick={handleOpen}
-            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105 active:scale-95 relative group chat-button-pulse"
+            className="h-14 w-14 sm:h-16 sm:w-16 rounded-full shadow-xl hover:shadow-2xl bg-gradient-to-br from-primary via-primary to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary transition-all duration-300 hover:scale-105 active:scale-95 relative group chat-button-pulse border-2 border-primary/30"
             size="icon"
           >
-            <Bot className="h-6 w-6 transition-transform group-hover:scale-110" />
-            <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
+            <div className="flex flex-col items-center justify-center">
+              <span className="text-[10px] sm:text-xs font-serif font-bold text-primary-foreground leading-none">E</span>
+              <span className="text-[8px] sm:text-[10px] font-serif font-semibold text-primary-foreground/80 leading-none mt-0.5">OS</span>
+            </div>
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 sm:h-3.5 sm:w-3.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse shadow-lg" />
           </Button>
         </div>
       </>
@@ -242,8 +245,8 @@ TON RÔLE :
       `}</style>
       <Card
         className={cn(
-          'fixed bottom-6 right-6 w-full max-w-sm shadow-xl border-2 border-primary/20 z-50 flex flex-col overflow-hidden bg-card/95 backdrop-blur-md',
-          isMinimized ? 'h-16' : 'h-[480px] sm:h-[500px]',
+          'fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-full sm:max-w-sm shadow-2xl border-2 border-primary/30 z-50 flex flex-col overflow-hidden bg-card/98 backdrop-blur-md',
+          isMinimized ? 'h-14 sm:h-16' : 'h-[calc(100vh-8rem)] sm:h-[500px] max-h-[600px]',
           isOpening && 'chatbox-open-3d',
           isClosing && 'chatbox-close-3d'
         )}
@@ -252,35 +255,38 @@ TON RÔLE :
           backfaceVisibility: 'hidden',
         }}
       >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3 border-b-2 border-primary/10 bg-gradient-to-r from-primary/5 via-background to-background backdrop-blur-sm">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 sm:px-4 py-2.5 sm:py-3 border-b-2 border-primary/10 bg-gradient-to-r from-primary/5 via-background to-background backdrop-blur-sm">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <div className="relative flex-shrink-0">
-            <div className="rounded-full bg-gradient-to-br from-primary/20 to-primary/10 p-2.5 ring-2 ring-primary/30 shadow-lg">
-              <Bot className="h-4 w-4 text-primary" />
+            <div className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 p-2 sm:p-2.5 ring-2 ring-primary/30 shadow-lg border border-primary/20">
+              <div className="flex flex-col items-center justify-center">
+                <span className="text-[10px] sm:text-xs font-serif font-bold text-primary leading-none">E</span>
+                <span className="text-[8px] sm:text-[10px] font-serif font-semibold text-primary/80 leading-none mt-0.5">OS</span>
+              </div>
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse shadow-md" />
           </div>
           <div className="min-w-0 flex-1">
-            <CardTitle className="text-base font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Assistant IA</CardTitle>
-            <p className="text-xs text-muted-foreground truncate font-medium">ELYNDRA · TRAJECTORY OS</p>
+            <CardTitle className="text-sm sm:text-base font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Assistant IA</CardTitle>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate font-medium">ELYNDRA · TRAJECTORY OS</p>
           </div>
         </div>
         <div className="flex items-center gap-0.5 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:bg-muted/80 transition-colors"
+            className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted/80 transition-colors"
             onClick={() => setIsMinimized(!isMinimized)}
           >
-            <Minimize2 className="h-3.5 w-3.5" />
+            <Minimize2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-colors"
+            className="h-7 w-7 sm:h-8 sm:w-8 hover:bg-destructive/10 hover:text-destructive transition-colors"
             onClick={handleClose}
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </Button>
         </div>
       </CardHeader>
@@ -289,7 +295,7 @@ TON RÔLE :
         <>
           <CardContent className="flex-1 flex flex-col p-0 overflow-hidden bg-background">
             <ScrollArea className="flex-1 px-1">
-              <div className="px-4 py-5 space-y-4">
+              <div className="px-3 sm:px-4 py-4 sm:py-5 space-y-3 sm:space-y-4">
                 {messages
                   .filter((msg) => msg.role !== 'system')
                   .map((message, index) => {
@@ -298,43 +304,49 @@ TON RÔLE :
                       <div
                         key={index}
                         className={cn(
-                          'flex gap-2.5 items-end group',
+                          'flex gap-2 sm:gap-2.5 items-end group',
                           message.role === 'user' ? 'justify-end' : 'justify-start',
                           isAnimating && message.role === 'user' && 'chat-message-user-enter',
                           isAnimating && message.role === 'assistant' && 'chat-message-assistant-enter'
                         )}
                       >
                         {message.role === 'assistant' && (
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center border border-border mb-0.5">
-                            <Bot className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center border border-primary/20 mb-0.5 shadow-sm">
+                            <div className="flex flex-col items-center justify-center">
+                              <span className="text-[8px] sm:text-[10px] font-serif font-bold text-primary leading-none">E</span>
+                              <span className="text-[6px] sm:text-[8px] font-serif font-semibold text-primary/70 leading-none mt-0.5">OS</span>
+                            </div>
                           </div>
                         )}
                         <div
                           className={cn(
-                            'rounded-2xl px-4 py-2.5 max-w-[85%]',
+                            'rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 max-w-[80%] sm:max-w-[85%]',
                             message.role === 'user'
                               ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-lg rounded-br-md border border-primary/20'
                               : 'bg-gradient-to-br from-muted to-muted/80 text-foreground border-2 border-border/60 shadow-md rounded-bl-md'
                           )}
                         >
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed break-words">
+                          <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words">
                             {message.content}
                           </p>
                         </div>
                         {message.role === 'user' && (
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 mb-0.5">
-                            <User className="h-4 w-4 text-primary" />
+                          <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 mb-0.5">
+                            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                           </div>
                         )}
                       </div>
                     );
                   })}
                 {loading && (
-                  <div className="flex gap-2.5 justify-start items-end chat-message-assistant-enter">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center border border-border mb-0.5">
-                      <Bot className="h-4 w-4 text-muted-foreground animate-pulse" />
+                  <div className="flex gap-2 sm:gap-2.5 justify-start items-end chat-message-assistant-enter">
+                    <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center border border-primary/20 mb-0.5 shadow-sm">
+                      <div className="flex flex-col items-center justify-center">
+                        <span className="text-[8px] sm:text-[10px] font-serif font-bold text-primary leading-none animate-pulse">E</span>
+                        <span className="text-[6px] sm:text-[8px] font-serif font-semibold text-primary/70 leading-none mt-0.5">OS</span>
+                      </div>
                     </div>
-                    <div className="bg-muted border border-border/50 rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm">
+                    <div className="bg-gradient-to-br from-muted to-muted/80 border-2 border-border/60 rounded-2xl rounded-bl-md px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm">
                       <div className="flex gap-1 items-center">
                         <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
                         <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -346,7 +358,7 @@ TON RÔLE :
                 <div ref={messagesEndRef} className="h-1" />
               </div>
             </ScrollArea>
-            <div className="border-t-2 border-primary/10 bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-sm p-3.5">
+            <div className="border-t-2 border-primary/10 bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-sm p-3 sm:p-3.5">
               <div className="flex gap-2 items-end">
                 <div className="flex-1 relative">
                   <Input
@@ -356,7 +368,7 @@ TON RÔLE :
                     onKeyPress={handleKeyPress}
                     placeholder="Écrivez un message..."
                     disabled={loading}
-                    className="pr-10 border-2 border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all text-base bg-background/90"
+                    className="pr-10 border-2 border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all text-base bg-background/90 h-10 sm:h-11"
                     style={{ fontSize: '16px' }}
                   />
                 </div>
@@ -364,7 +376,7 @@ TON RÔLE :
                   onClick={handleSend} 
                   disabled={loading || !input.trim()} 
                   size="icon"
-                  className="h-9 w-9 shrink-0 bg-gradient-to-br from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 bg-gradient-to-br from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
