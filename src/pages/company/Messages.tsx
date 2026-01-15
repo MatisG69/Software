@@ -20,6 +20,8 @@ export const CompanyMessages = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showConversations, setShowConversations] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -116,22 +118,6 @@ export const CompanyMessages = () => {
   };
 
   const selectedConv = conversations.find((c) => c.id === selectedConversation);
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Chargement des conversations...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  const [showConversations, setShowConversations] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkWidth = () => {

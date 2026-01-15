@@ -3,50 +3,171 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, X, Bot, User, Minimize2, Sparkles, MessageSquare } from 'lucide-react';
-import { sendMessageToGroq, ChatMessage } from '@/lib/groq';
+import { Badge } from '@/components/ui/badge';
+import { Send, X, User, Minimize2, Sparkles } from 'lucide-react';
+import { sendMessageWithTools, ChatMessage } from '@/lib/groq';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { createAgentContext, getAgentContext } from '@/lib/chatbox/agentContext';
+import { agentTools, getToolByName, toolsToGroqFormat } from '@/lib/chatbox/agentTools';
+import { indexAllUserData, indexAllJobOffers } from '@/lib/chatbox/ragIndexer';
+import { searchRAGDocuments, formatRAGContext } from '@/lib/chatbox/ragSearch';
+import { 
+  getConversationHistory, 
+  saveMessage, 
+  getUserPreferences,
+  detectSearchPattern,
+  detectApplicationPattern,
+  getConversationId,
+} from '@/lib/chatbox/agentMemory';
+import { getDataAccessSummary } from '@/lib/chatbox/userDataService';
+import { RAGDocument } from '@/lib/chatbox/types';
+
+// Nouveau prompt système explicite et honnête
+const getSystemPrompt = (dataAccess: any, preferences: any[]): string => {
+  return `Tu es un agent IA opérationnel de ELYNDRA · TRAJECTORY OS.
+
+CAPACITÉS RÉELLES (ce que tu PEUX faire) :
+✅ Rechercher des offres d'emploi dans la base de données en temps réel
+✅ Récupérer les détails complets d'une offre d'emploi
+✅ Lister les candidatures de l'utilisateur avec leurs statuts
+✅ Postuler à une offre d'emploi (créer une candidature)
+✅ Ajouter/retirer des offres en favoris
+✅ Récupérer le profil complet de l'utilisateur (CV, compétences, expérience)
+✅ Accéder à l'historique des messages
+✅ Envoyer des messages aux entreprises
+✅ Récupérer les profils Decision DNA
+✅ Accéder aux statistiques de l'utilisateur
+✅ Utiliser le contexte RAG pour répondre avec des données réelles
+
+LIMITES EXPLICITES (ce que tu NE PEUX PAS faire) :
+❌ Modifier le profil utilisateur (lecture seule)
+❌ Supprimer des candidatures
+❌ Accéder aux données d'autres utilisateurs
+❌ Modifier les offres d'emploi (si candidat)
+❌ Apprendre de manière persistante sans stockage explicite
+
+ACCÈS AUX DONNÉES :
+- Profil utilisateur : ${dataAccess.profile.available ? '✅ Lecture seule, temps réel' : '❌ Non disponible'}
+- Candidatures : ${dataAccess.applications_history.available ? '✅ Lecture seule, temps réel' : '❌ Non disponible'}
+- Messages : ${dataAccess.messages.available ? '✅ Lecture seule, temps réel' : '❌ Non disponible'}
+- Offres d'emploi : ✅ Lecture seule, temps réel
+- Decision DNA : ${dataAccess.decision_dna.available ? '✅ Lecture seule, temps réel' : '❌ Non disponible'}
+- Historique navigation : ${dataAccess.navigation_history.available ? '✅ Disponible' : '❌ Non disponible'}
+
+PRÉFÉRENCES APPRISES :
+${preferences.length > 0 ? preferences.map(p => `- ${p.preference_type}: ${JSON.stringify(p.preference_value)} (confiance: ${(p.confidence_score * 100).toFixed(0)}%)`).join('\n') : 'Aucune préférence apprise pour le moment'}
+
+INSTRUCTIONS :
+1. **IMPORTANT** : Quand l'utilisateur demande quelque chose qui nécessite une action (recherche d'offres, liste de candidatures, etc.), TU DOIS utiliser les tools disponibles. N'explique pas comment faire, EXÉCUTE l'action.
+2. Exemples d'utilisation des tools :
+   - "Y a-t-il des offres en développement ?" → Utilise searchJobOffers avec category="Développement"
+   - "Montre-moi mes candidatures" → Utilise getUserApplications
+   - "Quelles sont mes offres favorites ?" → Utilise getFavoriteJobs
+3. Accède aux données via RAG pour répondre avec précision
+4. Sois explicite : dis "Je vais rechercher..." puis exécute réellement la tool
+5. Ne promets jamais ce que tu ne peux pas faire
+6. Utilise les préférences apprises pour personnaliser les suggestions
+7. Fournis toujours des données réelles, pas des exemples fictifs
+8. Réponds toujours en français
+9. Sois concis, professionnel, et amical`;
+
+};
 
 export const ChatBox = () => {
+  const { user, candidate, company } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'system',
-      content: `Tu es l'assistant IA de ELYNDRA · TRAJECTORY OS, une plateforme de recrutement anonyme innovante.
-
-CONTEXTE DE LA PLATEFORME :
-- ELYNDRA · TRAJECTORY OS est une plateforme de recrutement qui garantit l'anonymat des candidats
-- Les entreprises peuvent publier des offres d'emploi et recevoir des candidatures anonymes
-- Les candidats peuvent rechercher des emplois, postuler de manière anonyme, et utiliser un système de "Decision DNA" pour évaluer leur compatibilité
-- Le système inclut un système de vérification/certification des profils candidats
-- Les candidats peuvent sauvegarder des offres en favoris et suivre leurs candidatures
-- Il y a un système de messagerie entre candidats et entreprises
-- La plateforme utilise des technologies modernes (React, TypeScript, Supabase, shadcn/ui)
-
-TON RÔLE :
-- Aide les utilisateurs (candidats et entreprises) à naviguer sur la plateforme
-- Réponds aux questions sur les fonctionnalités (recherche d'emploi, candidatures, Decision DNA, vérification, messages, favoris)
-- Guide les utilisateurs dans l'utilisation de la plateforme
-- Sois concis, professionnel, et amical
-- Réponds toujours en français`,
-    },
-    {
-      role: 'assistant',
-      content: 'Bonjour ! Je suis l\'assistant IA de ELYNDRA · TRAJECTORY OS. Je peux vous aider avec la recherche d\'emploi, les candidatures, le système Decision DNA, la vérification de profil, et bien plus encore. Comment puis-je vous assister aujourd\'hui ?',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [animatingMessages, setAnimatingMessages] = useState<Set<number>>(new Set());
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [ragDocuments, setRagDocuments] = useState<RAGDocument[]>([]);
+  const [executedActions, setExecutedActions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const agentContextInitialized = useRef(false);
+
+  // Initialiser le contexte agent et charger les données
+  useEffect(() => {
+    if (user && !agentContextInitialized.current) {
+      const context = createAgentContext(
+        user.id,
+        user.role,
+        candidate?.id,
+        company?.id
+      );
+      agentContextInitialized.current = true;
+
+      // Charger l'historique de conversation
+      loadConversationHistory();
+
+      // Indexer les données pour RAG
+      loadRAGData();
+
+      // Initialiser le message système
+      initializeSystemMessage();
+    }
+  }, [user, candidate, company]);
+
+  const loadConversationHistory = async () => {
+    if (!user) return;
+    const context = getAgentContext();
+    if (!context) return;
+
+    try {
+      const history = await getConversationHistory(context, 10);
+      if (history.length > 0) {
+        setMessages(prev => {
+          const systemMsg = prev.find(m => m.role === 'system');
+          return systemMsg ? [systemMsg, ...history] : history;
+        });
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+    }
+  };
+
+  const loadRAGData = async () => {
+    if (!user) return;
+    const context = getAgentContext();
+    if (!context) return;
+
+    try {
+      // Indexer les données utilisateur
+      const userDocs = await indexAllUserData(context);
+      
+      // Indexer quelques offres récentes (limité pour performance)
+      const jobDocs = await indexAllJobOffers(50);
+      
+      setRagDocuments([...userDocs, ...jobDocs]);
+    } catch (error) {
+      console.error('Error loading RAG data:', error);
+    }
+  };
+
+  const initializeSystemMessage = async () => {
+    if (!user) return;
+    const context = getAgentContext();
+    if (!context) return;
+
+    const dataAccess = getDataAccessSummary(context);
+    const preferences = await getUserPreferences(context);
+
+    const systemPrompt = getSystemPrompt(dataAccess, preferences);
+    const welcomeMessage = 'Bonjour ! Je suis votre agent IA opérationnel. Je peux réellement rechercher des offres, gérer vos candidatures, accéder à vos données, et bien plus. Comment puis-je vous aider aujourd\'hui ?';
+
+    setMessages([
+      { role: 'system', content: systemPrompt },
+      { role: 'assistant', content: welcomeMessage },
+    ]);
+  };
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -58,16 +179,18 @@ TON RÔLE :
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Gérer le scroll et la hauteur quand le clavier apparaît sur mobile
+  // Gérer le scroll quand le clavier apparaît sur mobile
   useEffect(() => {
     const scrollToBottom = () => {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
-        // Alternative: scroll direct dans le ScrollArea
         if (scrollAreaRef.current) {
-          const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+          const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
           if (scrollContainer) {
-            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+            scrollContainer.scrollTo({
+              top: scrollContainer.scrollHeight,
+              behavior: 'smooth'
+            });
           }
         }
       }, 100);
@@ -82,7 +205,6 @@ TON RÔLE :
       setIsKeyboardOpen(false);
     };
 
-    // Utiliser visualViewport API pour détecter le clavier sur mobile
     const handleViewportResize = () => {
       if (typeof window !== 'undefined' && window.visualViewport) {
         const viewportHeight = window.visualViewport.height;
@@ -90,7 +212,6 @@ TON RÔLE :
         const keyboardHeight = windowHeight - viewportHeight;
         
         if (keyboardHeight > 150) {
-          // Clavier ouvert
           setIsKeyboardOpen(true);
           setKeyboardOffset(keyboardHeight);
           scrollToBottom();
@@ -123,7 +244,10 @@ TON RÔLE :
   }, [isOpen, isMinimized]);
 
   const handleSend = async () => {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading || !user) return;
+
+    const context = getAgentContext();
+    if (!context) return;
 
     const userMessage: ChatMessage = {
       role: 'user',
@@ -135,22 +259,134 @@ TON RÔLE :
     setInput('');
     setLoading(true);
 
+    // La conversation sera créée/gérée automatiquement dans saveMessage
+
     // Animation pour le message utilisateur
     const userMessageIndex = newMessages.filter((msg) => msg.role !== 'system').length - 1;
     setAnimatingMessages((prev) => new Set([...prev, userMessageIndex]));
-    setTimeout(() => {
-      setAnimatingMessages((prev) => {
-        const next = new Set(prev);
-        next.delete(userMessageIndex);
-        return next;
-      });
-    }, 500);
 
     try {
-      const response = await sendMessageToGroq(newMessages);
+      // Recherche RAG pour contexte
+      const ragContext = searchRAGDocuments(ragDocuments, input.trim(), { limit: 5 });
+      const ragContextText = formatRAGContext(ragContext);
+
+      // Préparer les messages avec contexte RAG
+      const messagesWithContext = newMessages.map((msg, idx) => {
+        if (idx === newMessages.length - 1 && msg.role === 'user') {
+          return {
+            ...msg,
+            content: ragContextText + '\n\n' + msg.content,
+          };
+        }
+        return msg;
+      });
+
+      // Appeler Groq avec function calling
+      const tools = toolsToGroqFormat();
+      let response;
+      let toolCalls: any[] = [];
+      const executedToolNames: string[] = []; // Déclarer avant le bloc if
+
+      try {
+        response = await sendMessageWithTools(messagesWithContext, tools);
+        toolCalls = response.tool_calls || [];
+      } catch (error: any) {
+        // Si function calling échoue, essayer sans tools
+        console.warn('Function calling failed, trying without tools:', error);
+        try {
+          const { sendMessageToGroq } = await import('@/lib/groq');
+          const fallbackResponse = await sendMessageToGroq(messagesWithContext);
+          response = { content: fallbackResponse };
+        } catch (fallbackError) {
+          throw error; // Relancer l'erreur originale
+        }
+      }
+
+      let assistantContent = response?.content || '';
+
+      // Exécuter les tools si nécessaire
+      if (toolCalls.length > 0) {
+        const toolResults: ChatMessage[] = [];
+
+        for (const toolCall of toolCalls) {
+          const tool = getToolByName(toolCall.function.name);
+          if (tool) {
+            try {
+              const params = JSON.parse(toolCall.function.arguments);
+              const result = await tool.execute(params, context);
+
+              toolResults.push({
+                role: 'tool',
+                content: JSON.stringify(result),
+                tool_call_id: toolCall.id,
+              });
+
+              executedToolNames.push(tool.name);
+
+              // Apprentissage comportemental
+              if (tool.name === 'searchJobOffers') {
+                await detectSearchPattern(context, params.search || '', params);
+              }
+              if (tool.name === 'createApplication') {
+                // Récupérer la catégorie de l'offre pour l'apprentissage
+                const jobDetails = await getToolByName('getJobOfferDetails')?.execute({ jobId: params.jobId }, context);
+                if (jobDetails?.success) {
+                  await detectApplicationPattern(context, jobDetails.job.category, jobDetails.job.type);
+                }
+              }
+            } catch (error: any) {
+              toolResults.push({
+                role: 'tool',
+                content: JSON.stringify({ success: false, error: error.message }),
+                tool_call_id: toolCall.id,
+              });
+            }
+          }
+        }
+
+        setExecutedActions(executedToolNames);
+
+        // Envoyer les résultats des tools à l'IA pour générer la réponse finale
+        const messagesWithToolResults = [
+          ...messagesWithContext,
+          ...toolResults.map(tr => ({
+            ...tr,
+            role: 'tool' as const,
+          })),
+        ];
+
+        try {
+          const finalResponse = await sendMessageWithTools(messagesWithToolResults, tools);
+          assistantContent = finalResponse.content || 'Action exécutée avec succès.';
+        } catch (error: any) {
+          // Si la réponse finale échoue, utiliser un message simple
+          console.warn('Error getting final response:', error);
+          assistantContent = `J'ai exécuté ${executedToolNames.length} action(s) : ${executedToolNames.join(', ')}. Les résultats sont disponibles.`;
+        }
+      }
+
       const assistantMessageIndex = newMessages.filter((msg) => msg.role !== 'system').length;
-      setMessages([...newMessages, { role: 'assistant', content: response }]);
-      
+      setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+
+      // Sauvegarder les messages (la conversation sera créée automatiquement)
+      try {
+        const conversationId = await getConversationId(context);
+        if (conversationId) {
+          await saveMessage(conversationId, {
+            role: 'user',
+            content: userMessage.content,
+          });
+          await saveMessage(conversationId, {
+            role: 'assistant',
+            content: assistantContent,
+            tools_called: executedToolNames,
+            rag_context: ragContext,
+          });
+        }
+      } catch (error) {
+        console.error('Error saving messages:', error);
+      }
+
       // Animation pour le message assistant
       setTimeout(() => {
         setAnimatingMessages((prev) => new Set([...prev, assistantMessageIndex]));
@@ -172,18 +408,16 @@ TON RÔLE :
           content: 'Désolé, une erreur est survenue. Veuillez réessayer plus tard.',
         },
       ]);
-      setTimeout(() => {
-        setAnimatingMessages((prev) => new Set([...prev, assistantMessageIndex]));
-        setTimeout(() => {
-          setAnimatingMessages((prev) => {
-            const next = new Set(prev);
-            next.delete(assistantMessageIndex);
-            return next;
-          });
-        }, 500);
-      }, 100);
     } finally {
       setLoading(false);
+      setExecutedActions([]);
+      setTimeout(() => {
+        setAnimatingMessages((prev) => {
+          const next = new Set(prev);
+          next.delete(userMessageIndex);
+          return next;
+        });
+      }, 500);
     }
   };
 
@@ -340,7 +574,7 @@ TON RÔLE :
             <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse shadow-md" />
           </div>
           <div className="min-w-0 flex-1">
-            <CardTitle className="text-sm sm:text-base font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Assistant IA</CardTitle>
+            <CardTitle className="text-sm sm:text-base font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Agent IA</CardTitle>
             <p className="text-[10px] sm:text-xs text-muted-foreground truncate font-medium">ELYNDRA · TRAJECTORY OS</p>
           </div>
         </div>
@@ -373,6 +607,7 @@ TON RÔLE :
                   .filter((msg) => msg.role !== 'system')
                   .map((message, index) => {
                     const isAnimating = animatingMessages.has(index);
+                    const hasActions = executedActions.length > 0 && index === messages.filter(m => m.role !== 'system').length - 1;
                     return (
                       <div
                         key={index}
@@ -399,6 +634,16 @@ TON RÔLE :
                               : 'bg-gradient-to-br from-muted to-muted/80 text-foreground border-2 border-border/60 shadow-md rounded-bl-md'
                           )}
                         >
+                          {hasActions && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {executedActions.map((action, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                                  <Sparkles className="w-2.5 h-2.5 mr-1" />
+                                  {action}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                           <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words">
                             {message.content}
                           </p>
@@ -439,18 +684,14 @@ TON RÔLE :
                     value={input}
                     onChange={(e) => {
                       setInput(e.target.value);
-                      // Scroll vers le bas pendant la saisie
                       setTimeout(() => {
                         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
                       }, 100);
                     }}
                     onKeyPress={handleKeyPress}
                     onFocus={() => {
-                      // Scroll vers le bas quand l'input est focus (clavier ouvert)
                       setTimeout(() => {
-                        // Méthode 1: scrollIntoView
                         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
-                        // Méthode 2: scroll direct dans le ScrollArea (plus fiable)
                         if (scrollAreaRef.current) {
                           const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
                           if (scrollContainer) {
@@ -463,14 +704,14 @@ TON RÔLE :
                       }, 400);
                     }}
                     placeholder="Écrivez un message..."
-                    disabled={loading}
+                    disabled={loading || !user}
                     className="pr-10 border-2 border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all text-base bg-background/90 h-10 sm:h-11"
                     style={{ fontSize: '16px' }}
                   />
                 </div>
                 <Button 
                   onClick={handleSend} 
-                  disabled={loading || !input.trim()} 
+                  disabled={loading || !input.trim() || !user} 
                   size="icon"
                   className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 bg-gradient-to-br from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
