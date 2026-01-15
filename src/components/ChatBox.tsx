@@ -41,8 +41,12 @@ TON RÔLE :
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [animatingMessages, setAnimatingMessages] = useState<Set<number>>(new Set());
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -53,6 +57,70 @@ TON RÔLE :
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Gérer le scroll et la hauteur quand le clavier apparaît sur mobile
+  useEffect(() => {
+    const scrollToBottom = () => {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
+        // Alternative: scroll direct dans le ScrollArea
+        if (scrollAreaRef.current) {
+          const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+          if (scrollContainer) {
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          }
+        }
+      }, 100);
+    };
+
+    const handleFocus = () => {
+      setIsKeyboardOpen(true);
+      scrollToBottom();
+    };
+
+    const handleBlur = () => {
+      setIsKeyboardOpen(false);
+    };
+
+    // Utiliser visualViewport API pour détecter le clavier sur mobile
+    const handleViewportResize = () => {
+      if (typeof window !== 'undefined' && window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const keyboardHeight = windowHeight - viewportHeight;
+        
+        if (keyboardHeight > 150) {
+          // Clavier ouvert
+          setIsKeyboardOpen(true);
+          setKeyboardOffset(keyboardHeight);
+          scrollToBottom();
+        } else {
+          setIsKeyboardOpen(false);
+          setKeyboardOffset(0);
+        }
+      }
+    };
+
+    const input = inputRef.current;
+    if (input) {
+      input.addEventListener('focus', handleFocus);
+      input.addEventListener('blur', handleBlur);
+    }
+
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+    }
+    
+    return () => {
+      if (input) {
+        input.removeEventListener('focus', handleFocus);
+        input.removeEventListener('blur', handleBlur);
+      }
+      if (typeof window !== 'undefined' && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+      }
+    };
+  }, [isOpen, isMinimized]);
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
@@ -244,15 +312,20 @@ TON RÔLE :
         }
       `}</style>
       <Card
+        ref={cardRef}
         className={cn(
           'fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-full sm:max-w-sm shadow-2xl border-2 border-primary/30 z-50 flex flex-col overflow-hidden bg-card/98 backdrop-blur-md',
           isMinimized ? 'h-14 sm:h-16' : 'h-[calc(100vh-8rem)] sm:h-[500px] max-h-[600px]',
+          isKeyboardOpen && !isMinimized && 'h-[calc(100vh-12rem)] sm:h-[500px]',
           isOpening && 'chatbox-open-3d',
           isClosing && 'chatbox-close-3d'
         )}
         style={{
           transformStyle: 'preserve-3d',
           backfaceVisibility: 'hidden',
+          ...(isKeyboardOpen && keyboardOffset > 0 && {
+            bottom: `${keyboardOffset + 16}px`,
+          }),
         }}
       >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 sm:px-4 py-2.5 sm:py-3 border-b-2 border-primary/10 bg-gradient-to-r from-primary/5 via-background to-background backdrop-blur-sm">
@@ -294,7 +367,7 @@ TON RÔLE :
       {!isMinimized && (
         <>
           <CardContent className="flex-1 flex flex-col p-0 overflow-hidden bg-background">
-            <ScrollArea className="flex-1 px-1">
+            <ScrollArea ref={scrollAreaRef} className="flex-1 px-1">
               <div className="px-3 sm:px-4 py-4 sm:py-5 space-y-3 sm:space-y-4">
                 {messages
                   .filter((msg) => msg.role !== 'system')
@@ -364,8 +437,31 @@ TON RÔLE :
                   <Input
                     ref={inputRef}
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      // Scroll vers le bas pendant la saisie
+                      setTimeout(() => {
+                        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                      }, 100);
+                    }}
                     onKeyPress={handleKeyPress}
+                    onFocus={() => {
+                      // Scroll vers le bas quand l'input est focus (clavier ouvert)
+                      setTimeout(() => {
+                        // Méthode 1: scrollIntoView
+                        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
+                        // Méthode 2: scroll direct dans le ScrollArea (plus fiable)
+                        if (scrollAreaRef.current) {
+                          const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+                          if (scrollContainer) {
+                            scrollContainer.scrollTo({
+                              top: scrollContainer.scrollHeight,
+                              behavior: 'smooth'
+                            });
+                          }
+                        }
+                      }, 400);
+                    }}
                     placeholder="Écrivez un message..."
                     disabled={loading}
                     className="pr-10 border-2 border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all text-base bg-background/90 h-10 sm:h-11"
