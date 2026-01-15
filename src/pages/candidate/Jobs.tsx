@@ -48,12 +48,16 @@ export const CandidateJobs = () => {
   // Détecter si on est sur mobile
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth < 1024);
+      }
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    if (typeof window !== 'undefined') {
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
   }, []);
 
   // Fermer le Sheet si on passe en mode desktop
@@ -383,21 +387,21 @@ export const CandidateJobs = () => {
               <div className="w-full lg:w-2/5 space-y-4 min-w-0">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-foreground">
+                    <h2 className="text-xl sm:text-2xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                       {jobs.length} offre{jobs.length > 1 ? 's' : ''} trouvée{jobs.length > 1 ? 's' : ''}
                     </h2>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {jobs.map((job, index) => {
                     return (
                     <Card
                       key={job.id}
                         className={cn(
-                          "relative cursor-pointer transition-all duration-200 bg-card rounded-xl border-2",
+                          "relative cursor-pointer transition-all duration-300 bg-gradient-to-br from-card via-card to-card/95 rounded-xl border-2 overflow-hidden group",
                           selectedJob?.id === job.id 
-                            ? 'border-primary shadow-lg bg-primary/5' 
-                            : 'border-border hover:border-primary/50 shadow-md hover:shadow-lg',
+                            ? 'border-primary shadow-xl bg-gradient-to-br from-primary/10 via-primary/5 to-card ring-2 ring-primary/20' 
+                            : 'border-border/60 hover:border-primary/60 shadow-lg hover:shadow-xl hover:scale-[1.02]',
                           jobsLoaded && "job-card-enter-3d"
                         )}
                         style={{
@@ -411,12 +415,14 @@ export const CandidateJobs = () => {
                         }
                       }}
                     >
-                        <CardHeader className="pb-4 pt-5 px-6">
+                      {/* Effet de brillance au survol */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none"></div>
+                        <CardHeader className="pb-4 pt-5 px-6 relative z-10">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex-1 min-w-0 space-y-3">
                               {/* Titre de l'offre - Plus visible */}
                               <div>
-                                <CardTitle className={`text-lg font-bold text-foreground line-clamp-2 mb-2 hover:text-primary transition-colors leading-tight ${
+                                <CardTitle className={`text-lg sm:text-xl font-bold text-foreground line-clamp-2 mb-2 hover:text-primary transition-colors leading-tight ${
                                   selectedJob?.id === job.id ? 'text-primary' : ''
                                 }`}>
                                 {job.title}
@@ -425,31 +431,32 @@ export const CandidateJobs = () => {
                               
                               {/* Entreprise */}
                             {job.company && (
-                                <CardDescription className="text-base font-semibold text-foreground/90">
-                                {job.company.name}
+                                <CardDescription className="text-base font-semibold text-foreground/90 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                                  {job.company.name}
                               </CardDescription>
                             )}
                               
                               {/* Location */}
                               <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                                <MapPin className="w-4 h-4 flex-shrink-0" />
+                                <MapPin className="w-4 h-4 flex-shrink-0 text-primary/70" />
                                 <span>{job.location}</span>
                               </p>
 
                               {/* Badges d'informations clés */}
                               <div className="flex flex-wrap gap-2 pt-1">
                                 {job.salary && (
-                                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 shadow-sm">
                                     <DollarSign className="w-3.5 h-3.5 mr-1.5" />
                                     {formatSalary(job.salary.min, job.salary.max, job.salary.currency)}
                                   </span>
                                 )}
-                                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground border border-border">
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-br from-muted to-muted/80 text-foreground border border-border/60 shadow-sm">
                                   <Briefcase className="w-3.5 h-3.5 mr-1.5" />
                                   {getTypeLabel(job.type)}
                                 </span>
                                 {job.benefits && (
-                                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground border border-border">
+                                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-br from-primary/10 to-primary/5 text-primary border border-primary/20 shadow-sm">
                                     {job.benefits.split('.')[0]}
                                   </span>
                                 )}
@@ -497,8 +504,8 @@ export const CandidateJobs = () => {
               {/* Détails de l'offre - Colonne droite - Amélioré - Desktop uniquement */}
               <div className="hidden lg:block w-full lg:w-3/5 min-w-0">
                 {selectedJob ? (
-                  <Card className="lg:sticky lg:top-6 bg-card rounded-xl border-2 border-border shadow-lg">
-                    <CardHeader className="pb-5 pt-6 px-4 sm:px-6 border-b border-border">
+                  <Card className="lg:sticky lg:top-6 bg-gradient-to-br from-card via-card to-card/95 rounded-xl border-2 border-primary/20 shadow-2xl ring-2 ring-primary/10">
+                    <CardHeader className="pb-5 pt-6 px-4 sm:px-6 border-b-2 border-primary/10 bg-gradient-to-r from-primary/5 via-transparent to-transparent">
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
@@ -559,26 +566,26 @@ export const CandidateJobs = () => {
                       {/* Détails de l'emploi - Amélioré */}
                       <div className="space-y-5">
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                          <h3 className="text-xl font-bold text-foreground">Informations clés</h3>
+                          <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
+                          <h3 className="text-xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Informations clés</h3>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
                           {selectedJob.salary && (
-                            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                                <DollarSign className="w-5 h-5 text-muted-foreground" />
+                            <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 rounded-xl border-2 border-green-200/50 dark:border-green-800/30 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 flex-shrink-0">
+                                <DollarSign className="w-5 h-5 text-green-700 dark:text-green-400" />
                               </div>
                               <div>
                                 <p className="text-sm font-bold text-foreground mb-1">Salaire</p>
-                                <p className="text-sm font-semibold text-foreground">
+                                <p className="text-sm font-semibold text-green-700 dark:text-green-400">
                                   {formatSalary(selectedJob.salary.min, selectedJob.salary.max, selectedJob.salary.currency)}
                                 </p>
                               </div>
                             </div>
                           )}
-                          <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                              <Briefcase className="w-5 h-5 text-muted-foreground" />
+                          <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-muted/80 to-muted/50 rounded-xl border-2 border-border/60 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-muted to-muted/80 flex-shrink-0">
+                              <Briefcase className="w-5 h-5 text-primary" />
                             </div>
                             <div>
                               <p className="text-sm font-bold text-foreground mb-1">Type de poste</p>
@@ -587,9 +594,9 @@ export const CandidateJobs = () => {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                              <MapPin className="w-5 h-5 text-muted-foreground" />
+                          <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-muted/80 to-muted/50 rounded-xl border-2 border-border/60 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-muted to-muted/80 flex-shrink-0">
+                              <MapPin className="w-5 h-5 text-primary" />
                             </div>
                             <div>
                               <p className="text-sm font-bold text-foreground mb-1">Lieu de l'emploi</p>
@@ -599,9 +606,9 @@ export const CandidateJobs = () => {
                             </div>
                           </div>
                           {selectedJob.benefits && (
-                            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                                <Sparkles className="w-5 h-5 text-muted-foreground" />
+                            <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex-shrink-0">
+                                <Sparkles className="w-5 h-5 text-primary" />
                               </div>
                               <div>
                                 <p className="text-sm font-bold text-foreground mb-1">Avantages</p>
@@ -627,10 +634,10 @@ export const CandidateJobs = () => {
                         section.content ? (
                           <div key={idx} className="space-y-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                              <h3 className="text-lg font-bold text-foreground">{section.title}</h3>
+                              <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
+                              <h3 className="text-lg font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{section.title}</h3>
                             </div>
-                            <div className="bg-muted/50 rounded-xl border-2 border-border p-5">
+                            <div className="bg-gradient-to-br from-muted/60 to-muted/40 rounded-xl border-2 border-border/60 p-5 shadow-sm hover:shadow-md transition-shadow">
                               <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                               {section.content}
                             </p>
@@ -643,15 +650,15 @@ export const CandidateJobs = () => {
                       {selectedJob.requirements && selectedJob.requirements.length > 0 && (
                         <div className="space-y-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                            <h3 className="text-lg font-bold text-foreground">Compétences requises</h3>
+                            <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
+                            <h3 className="text-lg font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Compétences requises</h3>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {selectedJob.requirements.map((req, idx) => (
                               <Badge 
                                 key={idx} 
                                 variant="secondary" 
-                                className="px-3 py-1.5 text-sm font-semibold bg-muted border-2 border-border hover:border-border transition-all duration-200 rounded-lg"
+                                className="px-3 py-1.5 text-sm font-semibold bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/15 transition-all duration-200 rounded-lg shadow-sm"
                               >
                                 {req}
                               </Badge>
@@ -705,18 +712,18 @@ export const CandidateJobs = () => {
 
         {/* Panel mobile pour afficher l'offre sélectionnée */}
         <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-          <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+          <SheetContent side="bottom" className="h-[90vh] overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
             {selectedJob ? (
               <div className="space-y-6">
-                <SheetHeader>
+                <SheetHeader className="pb-4 border-b-2 border-primary/10 bg-gradient-to-r from-primary/5 via-transparent to-transparent -mx-6 px-6 pt-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                        <SheetTitle className="text-xl sm:text-2xl font-bold text-foreground break-words">
+                        <SheetTitle className="text-xl sm:text-2xl font-bold text-foreground break-words bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                           {selectedJob.title}
                         </SheetTitle>
                         {selectedJob.createdAt && (new Date().getTime() - new Date(selectedJob.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
-                          <span className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">
+                          <span className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg">
                             Nouveau
                           </span>
                         )}
@@ -730,17 +737,17 @@ export const CandidateJobs = () => {
                         </div>
                       )}
                       <p className="text-sm text-muted-foreground mb-4 flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4" />
+                        <MapPin className="w-4 h-4 text-primary/70" />
                         {selectedJob.location}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {selectedJob.salary && (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-foreground border border-border">
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 shadow-sm">
                             <DollarSign className="w-3.5 h-3.5 mr-1.5" />
                             {formatSalary(selectedJob.salary.min, selectedJob.salary.max, selectedJob.salary.currency)}
                           </span>
                         )}
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground border border-border">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-br from-muted to-muted/80 text-foreground border border-border/60 shadow-sm">
                           <Briefcase className="w-3.5 h-3.5 mr-1.5" />
                           {getTypeLabel(selectedJob.type)}
                         </span>
@@ -769,26 +776,26 @@ export const CandidateJobs = () => {
                   {/* Détails de l'emploi */}
                   <div className="space-y-5">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                      <h3 className="text-xl font-bold text-foreground">Informations clés</h3>
+                      <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
+                      <h3 className="text-xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Informations clés</h3>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {selectedJob.salary && (
-                        <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                            <DollarSign className="w-5 h-5 text-muted-foreground" />
+                        <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 rounded-xl border-2 border-green-200/50 dark:border-green-800/30 shadow-sm">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 flex-shrink-0">
+                            <DollarSign className="w-5 h-5 text-green-700 dark:text-green-400" />
                           </div>
                           <div>
                             <p className="text-sm font-bold text-foreground mb-1">Salaire</p>
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-sm font-semibold text-green-700 dark:text-green-400">
                               {formatSalary(selectedJob.salary.min, selectedJob.salary.max, selectedJob.salary.currency)}
                             </p>
                           </div>
                         </div>
                       )}
-                      <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                          <Briefcase className="w-5 h-5 text-muted-foreground" />
+                      <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-muted/80 to-muted/50 rounded-xl border-2 border-border/60 shadow-sm">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-muted to-muted/80 flex-shrink-0">
+                          <Briefcase className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-foreground mb-1">Type de poste</p>
@@ -797,9 +804,9 @@ export const CandidateJobs = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                          <MapPin className="w-5 h-5 text-muted-foreground" />
+                      <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-muted/80 to-muted/50 rounded-xl border-2 border-border/60 shadow-sm">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-muted to-muted/80 flex-shrink-0">
+                          <MapPin className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-foreground mb-1">Lieu de l'emploi</p>
@@ -809,9 +816,9 @@ export const CandidateJobs = () => {
                         </div>
                       </div>
                       {selectedJob.benefits && (
-                        <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl border-2 border-border">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted flex-shrink-0">
-                            <Sparkles className="w-5 h-5 text-muted-foreground" />
+                        <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border-2 border-primary/20 shadow-sm">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex-shrink-0">
+                            <Sparkles className="w-5 h-5 text-primary" />
                           </div>
                           <div>
                             <p className="text-sm font-bold text-foreground mb-1">Avantages</p>
@@ -837,10 +844,10 @@ export const CandidateJobs = () => {
                     section.content ? (
                       <div key={idx} className="space-y-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                          <h3 className="text-lg font-bold text-foreground">{section.title}</h3>
+                          <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
+                          <h3 className="text-lg font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{section.title}</h3>
                         </div>
-                        <div className="bg-muted/50 rounded-xl border-2 border-border p-5">
+                        <div className="bg-gradient-to-br from-muted/60 to-muted/40 rounded-xl border-2 border-border/60 p-5 shadow-sm">
                           <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                             {section.content}
                           </p>
@@ -853,15 +860,15 @@ export const CandidateJobs = () => {
                   {selectedJob.requirements && selectedJob.requirements.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                        <h3 className="text-lg font-bold text-foreground">Compétences requises</h3>
+                        <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
+                        <h3 className="text-lg font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Compétences requises</h3>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {selectedJob.requirements.map((req, idx) => (
                           <Badge 
                             key={idx} 
                             variant="secondary" 
-                            className="px-3 py-1.5 text-sm font-semibold bg-muted border-2 border-border hover:border-border transition-all duration-200 rounded-lg"
+                            className="px-3 py-1.5 text-sm font-semibold bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/15 transition-all duration-200 rounded-lg shadow-sm"
                           >
                             {req}
                           </Badge>

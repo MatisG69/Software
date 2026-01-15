@@ -198,13 +198,14 @@ export const Navbar = () => {
                           to={item.path}
                           onClick={toggleMenu}
                           className={cn(
-                            "block py-5 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight transition-colors duration-200 uppercase",
+                            "block py-5 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight transition-colors duration-200 uppercase relative overflow-hidden group",
                             isActive 
                               ? "text-primary" 
                               : "text-muted-foreground hover:text-foreground"
                           )}
                         >
-                          {item.label}
+                          <span className="relative z-10 inline-block">{item.label}</span>
+                          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></span>
                         </Link>
                       );
                     })}
@@ -213,9 +214,10 @@ export const Navbar = () => {
                         toggleMenu();
                         handleSignOut();
                       }}
-                      className="block py-5 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-muted-foreground hover:text-foreground transition-colors duration-200 uppercase w-full text-left"
+                      className="block py-5 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-muted-foreground hover:text-foreground transition-colors duration-200 uppercase w-full text-left relative overflow-hidden group"
                     >
-                      Déconnexion
+                      <span className="relative z-10 inline-block">Déconnexion</span>
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></span>
                     </button>
                   </div>
                 </nav>

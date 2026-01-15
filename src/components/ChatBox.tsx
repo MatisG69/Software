@@ -242,8 +242,8 @@ TON RÔLE :
       `}</style>
       <Card
         className={cn(
-          'fixed bottom-6 right-6 w-full max-w-sm shadow-xl border z-50 flex flex-col overflow-hidden',
-          isMinimized ? 'h-16' : 'h-[480px]',
+          'fixed bottom-6 right-6 w-full max-w-sm shadow-xl border-2 border-primary/20 z-50 flex flex-col overflow-hidden bg-card/95 backdrop-blur-md',
+          isMinimized ? 'h-16' : 'h-[480px] sm:h-[500px]',
           isOpening && 'chatbox-open-3d',
           isClosing && 'chatbox-close-3d'
         )}
@@ -252,17 +252,17 @@ TON RÔLE :
           backfaceVisibility: 'hidden',
         }}
       >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3 border-b bg-muted/30 backdrop-blur-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 py-3 border-b-2 border-primary/10 bg-gradient-to-r from-primary/5 via-background to-background backdrop-blur-sm">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="relative flex-shrink-0">
-            <div className="rounded-full bg-primary/10 p-2.5 ring-2 ring-primary/20">
+            <div className="rounded-full bg-gradient-to-br from-primary/20 to-primary/10 p-2.5 ring-2 ring-primary/30 shadow-lg">
               <Bot className="h-4 w-4 text-primary" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
           </div>
           <div className="min-w-0 flex-1">
-            <CardTitle className="text-base font-semibold truncate">Assistant IA</CardTitle>
-            <p className="text-xs text-muted-foreground truncate">ELYNDRA · TRAJECTORY OS</p>
+            <CardTitle className="text-base font-bold truncate bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Assistant IA</CardTitle>
+            <p className="text-xs text-muted-foreground truncate font-medium">ELYNDRA · TRAJECTORY OS</p>
           </div>
         </div>
         <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -313,8 +313,8 @@ TON RÔLE :
                           className={cn(
                             'rounded-2xl px-4 py-2.5 max-w-[85%]',
                             message.role === 'user'
-                              ? 'bg-primary text-primary-foreground shadow-sm rounded-br-md'
-                              : 'bg-muted text-foreground border border-border/50 shadow-sm rounded-bl-md'
+                              ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-lg rounded-br-md border border-primary/20'
+                              : 'bg-gradient-to-br from-muted to-muted/80 text-foreground border-2 border-border/60 shadow-md rounded-bl-md'
                           )}
                         >
                           <p className="text-sm whitespace-pre-wrap leading-relaxed break-words">
@@ -346,7 +346,7 @@ TON RÔLE :
                 <div ref={messagesEndRef} className="h-1" />
               </div>
             </ScrollArea>
-            <div className="border-t bg-background/80 backdrop-blur-sm p-3.5">
+            <div className="border-t-2 border-primary/10 bg-gradient-to-r from-background via-background to-primary/5 backdrop-blur-sm p-3.5">
               <div className="flex gap-2 items-end">
                 <div className="flex-1 relative">
                   <Input
@@ -356,14 +356,15 @@ TON RÔLE :
                     onKeyPress={handleKeyPress}
                     placeholder="Écrivez un message..."
                     disabled={loading}
-                    className="pr-10 border-border focus-visible:ring-2 focus-visible:ring-primary/20 transition-all"
+                    className="pr-10 border-2 border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all text-base bg-background/90"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
                 <Button 
                   onClick={handleSend} 
                   disabled={loading || !input.trim()} 
                   size="icon"
-                  className="h-9 w-9 shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-9 w-9 shrink-0 bg-gradient-to-br from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="h-4 w-4" />
                 </Button>

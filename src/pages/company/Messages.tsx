@@ -145,9 +145,12 @@ export const CompanyMessages = () => {
       }
     };
     
-    checkWidth();
-    window.addEventListener('resize', checkWidth);
-    return () => window.removeEventListener('resize', checkWidth);
+    // Vérifier immédiatement au montage
+    if (typeof window !== 'undefined') {
+      checkWidth();
+      window.addEventListener('resize', checkWidth);
+      return () => window.removeEventListener('resize', checkWidth);
+    }
   }, [selectedConversation]);
 
   // Sur mobile, afficher la liste si aucune conversation n'est sélectionnée
@@ -280,7 +283,8 @@ export const CompanyMessages = () => {
                     onKeyPress={(e) => e.key === 'Enter' && !sending && handleSendMessage()}
                     placeholder="Tapez votre message..."
                     disabled={sending}
-                    className="text-sm sm:text-base"
+                    className="text-base sm:text-base"
+                    style={{ fontSize: '16px' }}
                   />
                   <Button onClick={handleSendMessage} size="icon" disabled={sending || !messageText.trim()} className="flex-shrink-0">
                     <Send className="w-4 h-4" />
