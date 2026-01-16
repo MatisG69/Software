@@ -87,16 +87,17 @@ export const saveMessage = async (
 
 export const getConversationHistory = async (
   context: AgentContext,
-  limit: number = 20
+  limit: number = 20,
+  conversationId?: string
 ): Promise<ChatboxMessage[]> => {
   try {
-    const conversationId = await getConversationId(context);
-    if (!conversationId) return [];
+    const convId = conversationId || await getConversationId(context);
+    if (!convId) return [];
 
     const { data, error } = await supabase
       .from('chatbox_messages')
       .select('*')
-      .eq('conversation_id', conversationId)
+      .eq('conversation_id', convId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -114,6 +115,129 @@ export const getConversationHistory = async (
   } catch (error) {
     console.error('Error in getConversationHistory:', error);
     return [];
+  }
+};
+
+// Lister toutes les conversations de l'utilisateur
+export const listConversations = async (context: AgentContext): Promise<Array<{
+  id: string;
+  created_at: string;
+  updated_at: string;
+  preview: string;
+  message_count: number;
+}>> => {
+  try {
+    const { data: conversations, error: convError } = await supabase
+      .from('chatbox_conversations')
+      .select('id, created_at, updated_at')
+      .eq('user_id', context.userId)
+      .order('updated_at', { ascending: false })
+      .limit(50);
+
+    if (convError) {
+      console.error('Error fetching conversations:', convError);
+      return [];
+    }
+
+    if (!conversations || conversations.length === 0) {
+      return [];
+    }
+
+    // Pour chaque conversation, récupérer le premier message pour le preview
+    const conversationsWithPreview = await Promise.all(
+      conversations.map(async (conv) => {
+        const { data: messages } = await supabase
+          .from('chatbox_messages')
+          .select('content, role')
+          .eq('conversation_id', conv.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        const { count } = await supabase
+          .from('chatbox_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conv.id);
+
+        const preview = messages?.content 
+          ? (messages.content.length > 60 
+              ? messages.content.substring(0, 60) + '...' 
+              : messages.content)
+          : 'Nouvelle conversation';
+
+        return {
+          id: conv.id,
+          created_at: conv.created_at,
+          updated_at: conv.updated_at,
+          preview,
+          message_count: count || 0,
+        };
+      })
+    );
+
+    return conversationsWithPreview;
+  } catch (error) {
+    console.error('Error in listConversations:', error);
+    return [];
+  }
+};
+
+// Créer une nouvelle conversation
+export const createNewConversation = async (context: AgentContext): Promise<string | null> => {
+  try {
+    // Générer un nouveau session_id unique
+    const newSessionId = `session_${context.userId}_${Date.now()}`;
+    const newContext = { ...context, sessionId: newSessionId };
+    
+    return await createConversation(newContext);
+  } catch (error) {
+    console.error('Error creating new conversation:', error);
+    return null;
+  }
+};
+
+// Supprimer une conversation et tous ses messages
+export const deleteConversation = async (conversationId: string, context: AgentContext): Promise<boolean> => {
+  try {
+    // Vérifier que la conversation appartient à l'utilisateur
+    const { data: conv, error: convError } = await supabase
+      .from('chatbox_conversations')
+      .select('id')
+      .eq('id', conversationId)
+      .eq('user_id', context.userId)
+      .maybeSingle();
+
+    if (convError || !conv) {
+      console.error('Error verifying conversation ownership:', convError);
+      return false;
+    }
+
+    // Supprimer tous les messages de la conversation
+    const { error: messagesError } = await supabase
+      .from('chatbox_messages')
+      .delete()
+      .eq('conversation_id', conversationId);
+
+    if (messagesError) {
+      console.error('Error deleting messages:', messagesError);
+      return false;
+    }
+
+    // Supprimer la conversation
+    const { error: deleteError } = await supabase
+      .from('chatbox_conversations')
+      .delete()
+      .eq('id', conversationId);
+
+    if (deleteError) {
+      console.error('Error deleting conversation:', deleteError);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in deleteConversation:', error);
+    return false;
   }
 };
 

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { JobOffer, Application, Message, Notification, Candidate, Company, DecisionDNAResponse, DecisionDNA, CandidateDecisionDNA } from '../types';
-import { findMatchingCategories } from './jobSearch';
+import { findMatchingCategories, getSearchTerms, normalizeText } from './jobSearch';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -56,15 +56,38 @@ export const getJobOffers = async (filters?: {
       `)
       .order('created_at', { ascending: false });
 
-    // Recherche intelligente par domaine/catégorie
+    // Recherche intelligente par domaine/catégorie avec tolérance aux accents et synonymes
     if (filters?.search) {
+      // Obtenir tous les termes de recherche possibles (synonymes, métiers liés, variantes sans accents)
+      const searchTerms = getSearchTerms(filters.search);
+      const normalizedSearch = normalizeText(filters.search);
+      
+      // Construire les conditions de recherche avec tous les termes
+      const searchConditions: string[] = [];
+      
+      // Recherche dans le titre et la description avec chaque terme
+      for (const term of searchTerms) {
+        searchConditions.push(`title.ilike.%${term}%`);
+        searchConditions.push(`description.ilike.%${term}%`);
+        // Recherche aussi avec la version normalisée
+        if (normalizedSearch !== term.toLowerCase()) {
+          searchConditions.push(`title.ilike.%${normalizedSearch}%`);
+          searchConditions.push(`description.ilike.%${normalizedSearch}%`);
+        }
+      }
+      
+      // Recherche dans les catégories correspondantes
       const matchingCategories = findMatchingCategories(filters.search);
       if (matchingCategories.length > 0) {
-        // Rechercher dans le titre, description ET les catégories correspondantes
-        const categoryConditions = matchingCategories.map(cat => `category.eq.${cat}`).join(',');
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,${categoryConditions}`);
+        const categoryConditions = matchingCategories.map(cat => `category.eq.${cat}`);
+        searchConditions.push(...categoryConditions);
+      }
+      
+      // Combiner toutes les conditions avec OR
+      if (searchConditions.length > 0) {
+        query = query.or(searchConditions.join(','));
       } else {
-        // Recherche simple dans le titre et la description
+        // Fallback : recherche simple
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
     }
