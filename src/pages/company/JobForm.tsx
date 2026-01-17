@@ -18,7 +18,8 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '../../context/AuthContext';
-import { createJobOffer, updateJobOffer, getJobOfferById, getCompanyProfile } from '@/lib/supabase';
+import { createJobOffer, updateJobOffer, getJobOfferById, getCompanyProfile, uploadJobMedia } from '@/lib/supabase';
+import { Upload, X, Image as ImageIcon, Video } from 'lucide-react';
 
 export const CompanyJobForm = () => {
   const { id } = useParams();
@@ -27,6 +28,12 @@ export const CompanyJobForm = () => {
   const isEdit = !!id;
   const [loading, setLoading] = useState(false);
   const [formLoading, setFormLoading] = useState(isEdit);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [featuredImageFile, setFeaturedImageFile] = useState<File | null>(null);
+  const [featuredVideoFile, setFeaturedVideoFile] = useState<File | null>(null);
+  const [featuredImagePreview, setFeaturedImagePreview] = useState<string | null>(null);
+  const [featuredVideoPreview, setFeaturedVideoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -44,6 +51,8 @@ export const CompanyJobForm = () => {
     whatYouWillLive: '',
     whatWeWillLove: '',
     whoWeAre: '',
+    featuredImage: '',
+    featuredVideo: '',
     // Decision DNA
     decisionDNAEnabled: false,
     decisionDNAMode: 'no_test' as 'standard_decision_dna' | 'custom_company_test' | 'no_test',
@@ -105,6 +114,8 @@ export const CompanyJobForm = () => {
               whoWeAre: job.whoWeAre || '',
               decisionDNAEnabled: job.decisionDNAEnabled || false,
               decisionDNAMode: (job.decisionDNAMode || 'no_test') as 'standard_decision_dna' | 'custom_company_test' | 'no_test',
+              featuredImage: job.featuredImage || '',
+              featuredVideo: job.featuredVideo || '',
               decisionProfileTarget: {
                 rapidité: (job.decisionProfileTarget?.rapidité || 'moyen') as 'faible' | 'moyen' | 'élevé',
                 prudence: (job.decisionProfileTarget?.prudence || 'moyen') as 'faible' | 'moyen' | 'élevé',
@@ -112,6 +123,9 @@ export const CompanyJobForm = () => {
                 tolérance_au_risque: (job.decisionProfileTarget?.tolérance_au_risque || 'moyen') as 'faible' | 'moyen' | 'élevé',
               },
             }));
+            // Précharger les prévisualisations
+            if (job.featuredImage) setFeaturedImagePreview(job.featuredImage);
+            if (job.featuredVideo) setFeaturedVideoPreview(job.featuredVideo);
           }
         } catch (error) {
           console.error('Error loading job:', error);
@@ -122,6 +136,48 @@ export const CompanyJobForm = () => {
       loadJob();
     }
   }, [isEdit, id]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setFeaturedImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFeaturedImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Veuillez sélectionner un fichier image');
+      }
+    }
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('video/')) {
+        setFeaturedVideoFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFeaturedVideoPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Veuillez sélectionner un fichier vidéo');
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setFeaturedImageFile(null);
+    setFeaturedImagePreview(null);
+  };
+
+  const removeVideo = () => {
+    setFeaturedVideoFile(null);
+    setFeaturedVideoPreview(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +190,61 @@ export const CompanyJobForm = () => {
         .split(',')
         .map((r) => r.trim())
         .filter((r) => r.length > 0);
+
+      // Upload des médias si nécessaire
+      // Priorité : URL directe > Upload fichier
+      let featuredImageUrl = formData.featuredImage || null;
+      let featuredVideoUrl = formData.featuredVideo || null;
+
+      // Si un fichier est sélectionné ET qu'aucune URL n'est fournie, essayer l'upload
+      if (featuredImageFile && !formData.featuredImage) {
+        setUploadingImage(true);
+        const jobIdForUpload = id || 'temp-' + Date.now();
+        console.log('📤 Uploading image...', { file: featuredImageFile.name, jobId: jobIdForUpload });
+        const uploadedUrl = await uploadJobMedia(featuredImageFile, jobIdForUpload, 'image');
+        if (uploadedUrl) {
+          featuredImageUrl = uploadedUrl;
+          console.log('✅ Image uploaded:', uploadedUrl);
+        } else {
+          console.error('❌ Failed to upload image');
+          const useUrl = confirm('L\'upload a échoué. Voulez-vous utiliser une URL directe à la place ?\n\nSi oui, vous pourrez saisir l\'URL dans le champ prévu.');
+          if (!useUrl) {
+            setLoading(false);
+            return;
+          }
+        }
+        setUploadingImage(false);
+      }
+
+      // Si un fichier vidéo est sélectionné ET qu'aucune URL n'est fournie, essayer l'upload
+      if (featuredVideoFile && !formData.featuredVideo) {
+        setUploadingVideo(true);
+        const jobIdForUpload = id || 'temp-' + Date.now();
+        console.log('📤 Uploading video...', { file: featuredVideoFile.name, jobId: jobIdForUpload });
+        const uploadedUrl = await uploadJobMedia(featuredVideoFile, jobIdForUpload, 'video');
+        if (uploadedUrl) {
+          featuredVideoUrl = uploadedUrl;
+          console.log('✅ Video uploaded:', uploadedUrl);
+        } else {
+          console.error('❌ Failed to upload video');
+          const useUrl = confirm('L\'upload a échoué. Voulez-vous utiliser une URL directe à la place ?\n\nSi oui, vous pourrez saisir l\'URL dans le champ prévu.');
+          if (!useUrl) {
+            setLoading(false);
+            return;
+          }
+        }
+        setUploadingVideo(false);
+      }
+
+      // Si des URLs sont fournies directement, les utiliser
+      if (formData.featuredImage && formData.featuredImage.trim()) {
+        featuredImageUrl = formData.featuredImage.trim();
+        console.log('✅ Using direct image URL:', featuredImageUrl);
+      }
+      if (formData.featuredVideo && formData.featuredVideo.trim()) {
+        featuredVideoUrl = formData.featuredVideo.trim();
+        console.log('✅ Using direct video URL:', featuredVideoUrl);
+      }
 
       if (isEdit && id) {
         const updated = await updateJobOffer(id, {
@@ -189,7 +300,29 @@ export const CompanyJobForm = () => {
           decisionDNAEnabled: formData.decisionDNAEnabled,
           decisionDNAMode: formData.decisionDNAMode,
           decisionProfileTarget: formData.decisionDNAEnabled ? formData.decisionProfileTarget : undefined,
+          featuredImage: featuredImageUrl,
+          featuredVideo: featuredVideoUrl,
         });
+
+        // Si on a uploadé des fichiers avec un ID temporaire, mettre à jour avec le vrai ID
+        if (created && (featuredImageFile || featuredVideoFile)) {
+          const createdId = created.id;
+          
+          // Ré-uploader avec le bon ID si nécessaire
+          if (featuredImageFile && !featuredImageUrl?.includes(createdId)) {
+            const uploadedUrl = await uploadJobMedia(featuredImageFile, createdId, 'image');
+            if (uploadedUrl) {
+              await updateJobOffer(createdId, { featuredImage: uploadedUrl });
+            }
+          }
+          
+          if (featuredVideoFile && !featuredVideoUrl?.includes(createdId)) {
+            const uploadedUrl = await uploadJobMedia(featuredVideoFile, createdId, 'video');
+            if (uploadedUrl) {
+              await updateJobOffer(createdId, { featuredVideo: uploadedUrl });
+            }
+          }
+        }
 
         if (created) {
           navigate('/company/jobs');
@@ -444,15 +577,183 @@ export const CompanyJobForm = () => {
                   />
                 </div>
 
+              <div>
+                <Label htmlFor="otherInformation">Autres informations</Label>
+                <Textarea
+                  id="otherInformation"
+                  value={formData.otherInformation}
+                  onChange={(e) => setFormData({ ...formData, otherInformation: e.target.value })}
+                  rows={3}
+                  placeholder="Toute autre information pertinente..."
+                />
+              </div>
+              </div>
+
+              {/* Section Médias */}
+              <div className="border-t pt-6 space-y-4">
                 <div>
-                  <Label htmlFor="otherInformation">Autres informations</Label>
-                  <Textarea
-                    id="otherInformation"
-                    value={formData.otherInformation}
-                    onChange={(e) => setFormData({ ...formData, otherInformation: e.target.value })}
-                    rows={3}
-                    placeholder="Toute autre information pertinente..."
-                  />
+                  <h3 className="text-lg font-semibold mb-2">Médias de l'offre</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Ajoutez une image ou une vidéo pour rendre votre offre plus attractive. Ces médias s'afficheront dans l'onboarding des candidats.
+                  </p>
+                  <Alert className="mb-4">
+                    <AlertDescription>
+                      <strong>⚠️ Important :</strong> Pour uploader des fichiers, vous devez créer un bucket "job-media" dans Supabase Storage (Dashboard → Storage → New bucket). 
+                      Sinon, utilisez les champs URL ci-dessous pour ajouter des médias depuis une URL externe.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+
+                {/* Option 1: Upload par URL (alternative) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <Label htmlFor="featuredImageUrl">URL de l'image</Label>
+                    <Input
+                      id="featuredImageUrl"
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      value={formData.featuredImage || ''}
+                      onChange={(e) => {
+                        setFormData({ ...formData, featuredImage: e.target.value });
+                        if (e.target.value) {
+                          setFeaturedImagePreview(e.target.value);
+                          setFeaturedImageFile(null);
+                        }
+                      }}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Utilisez cette option si l'upload ne fonctionne pas
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="featuredVideoUrl">URL de la vidéo</Label>
+                    <Input
+                      id="featuredVideoUrl"
+                      type="url"
+                      placeholder="https://example.com/video.mp4"
+                      value={formData.featuredVideo || ''}
+                      onChange={(e) => {
+                        setFormData({ ...formData, featuredVideo: e.target.value });
+                        if (e.target.value) {
+                          setFeaturedVideoPreview(e.target.value);
+                          setFeaturedVideoFile(null);
+                        }
+                      }}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Utilisez cette option si l'upload ne fonctionne pas
+                    </p>
+                  </div>
+                </div>
+
+                <Separator className="my-4" />
+                <p className="text-sm font-medium text-center text-muted-foreground">OU uploader un fichier</p>
+                <Separator className="my-4" />
+
+                {/* Upload Image */}
+                <div>
+                  <Label htmlFor="featuredImage">Image principale</Label>
+                  <div className="mt-2 space-y-2">
+                    {featuredImagePreview ? (
+                      <div className="relative">
+                        <img
+                          src={featuredImagePreview}
+                          alt="Aperçu"
+                          className="w-full h-48 object-cover rounded-lg border-2 border-border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={removeImage}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="featuredImage"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <ImageIcon className="w-8 h-8 mb-2 text-muted-foreground" />
+                          <p className="mb-2 text-sm text-muted-foreground">
+                            <span className="font-semibold">Cliquez pour uploader</span> une image
+                          </p>
+                          <p className="text-xs text-muted-foreground">PNG, JPG, WEBP (max. 10MB)</p>
+                        </div>
+                        <input
+                          id="featuredImage"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                          disabled={uploadingImage}
+                        />
+                      </label>
+                    )}
+                    {uploadingImage && (
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                        Upload en cours...
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Upload Video */}
+                <div>
+                  <Label htmlFor="featuredVideo">Vidéo principale</Label>
+                  <div className="mt-2 space-y-2">
+                    {featuredVideoPreview ? (
+                      <div className="relative">
+                        <video
+                          src={featuredVideoPreview}
+                          className="w-full h-48 object-cover rounded-lg border-2 border-border"
+                          controls
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={removeVideo}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="featuredVideo"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Video className="w-8 h-8 mb-2 text-muted-foreground" />
+                          <p className="mb-2 text-sm text-muted-foreground">
+                            <span className="font-semibold">Cliquez pour uploader</span> une vidéo
+                          </p>
+                          <p className="text-xs text-muted-foreground">MP4, WEBM (max. 50MB)</p>
+                        </div>
+                        <input
+                          id="featuredVideo"
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={handleVideoChange}
+                          disabled={uploadingVideo}
+                        />
+                      </label>
+                    )}
+                    {uploadingVideo && (
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                        Upload en cours...
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

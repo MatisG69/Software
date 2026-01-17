@@ -39,6 +39,16 @@ export interface Company extends User {
   whoWeAre?: string;
 }
 
+export interface JobOfferMedia {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  thumbnail?: string;
+  title?: string;
+  description?: string;
+  order: number;
+}
+
 export interface JobOffer {
   id: string;
   companyId: string;
@@ -62,6 +72,10 @@ export interface JobOffer {
   whatYouWillLive?: string;
   whatWeWillLove?: string;
   whoWeAre?: string;
+  // Médias immersifs
+  media?: JobOfferMedia[];
+  featuredVideo?: string; // URL de la vidéo principale
+  featuredImage?: string; // URL de l'image principale
   // Decision DNA
   decisionDNAEnabled?: boolean;
   decisionDNAMode?: DecisionDNAMode;

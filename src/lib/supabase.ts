@@ -8,6 +8,81 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
+// FONCTIONS POUR L'UPLOAD DE FICHIERS
+// ============================================
+
+/**
+ * Upload un fichier (image ou vidéo) vers Supabase Storage
+ * Essaie plusieurs buckets et crée le bucket si nécessaire
+ */
+export const uploadJobMedia = async (
+  file: File,
+  jobId: string,
+  type: 'image' | 'video'
+): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${jobId}/${Date.now()}.${fileExt}`;
+    const filePath = `job-offers/${fileName}`;
+
+    // Liste des buckets à essayer (dans l'ordre de préférence)
+    const bucketsToTry = ['job-media', 'public', 'avatars'];
+    
+    for (const bucketName of bucketsToTry) {
+      try {
+        // Essayer d'uploader vers ce bucket
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (!error && data) {
+          // Obtenir l'URL publique
+          const { data: urlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(data.path);
+
+          console.log('✅ File uploaded successfully:', {
+            path: data.path,
+            publicUrl: urlData.publicUrl,
+            bucket: bucketName
+          });
+
+          return urlData.publicUrl;
+        } else if (error && error.message?.includes('Bucket not found')) {
+          // Ce bucket n'existe pas, essayer le suivant
+          console.log(`⚠️ Bucket "${bucketName}" not found, trying next...`);
+          continue;
+        } else if (error && (error.message?.includes('row-level security') || error.message?.includes('RLS'))) {
+          // Problème de politique de sécurité
+          console.error(`🔒 RLS Policy Error for bucket "${bucketName}":`, error.message);
+          console.error('💡 Solution: Configurez les politiques RLS dans Supabase Dashboard > Storage > Policies');
+          console.error('   Voir le fichier supabase_storage_policies.sql pour les instructions');
+          // Ne pas continuer, le problème est clair
+          return null;
+        } else {
+          // Autre erreur
+          console.error(`❌ Error uploading to bucket "${bucketName}":`, error);
+          continue;
+        }
+      } catch (bucketError: any) {
+        console.error(`❌ Error with bucket "${bucketName}":`, bucketError);
+        continue;
+      }
+    }
+
+    // Si aucun bucket n'a fonctionné, retourner null
+    console.error('❌ All buckets failed. Please create a bucket in Supabase Storage.');
+    return null;
+  } catch (error) {
+    console.error('❌ Error in uploadJobMedia:', error);
+    return null;
+  }
+};
+
+// ============================================
 // UTILITAIRES
 // ============================================
 
@@ -41,6 +116,8 @@ export const getJobOffers = async (filters?: {
       .from('job_offers')
       .select(`
         *,
+        featured_image,
+        featured_video,
         companies (
           id,
           name,
@@ -57,38 +134,48 @@ export const getJobOffers = async (filters?: {
       .order('created_at', { ascending: false });
 
     // Recherche intelligente par domaine/catégorie avec tolérance aux accents et synonymes
+    // AMÉLIORATION: Prioriser les résultats par catégorie mais ne pas exclure les résultats pertinents
     if (filters?.search) {
-      // Obtenir tous les termes de recherche possibles (synonymes, métiers liés, variantes sans accents)
-      const searchTerms = getSearchTerms(filters.search);
-      const normalizedSearch = normalizeText(filters.search);
+      // D'abord, détecter si la recherche correspond à une catégorie spécifique
+      const matchingCategories = findMatchingCategories(filters.search);
+      const hasCategoryMatch = matchingCategories.length > 0;
       
-      // Construire les conditions de recherche avec tous les termes
+      // Obtenir les termes de recherche (synonymes, variantes)
+      const searchTerms = getSearchTerms(filters.search);
       const searchConditions: string[] = [];
       
-      // Recherche dans le titre et la description avec chaque terme
-      for (const term of searchTerms) {
+      // Construire les conditions de recherche textuelle
+      for (const term of searchTerms.slice(0, 5)) { // Limiter pour performance
         searchConditions.push(`title.ilike.%${term}%`);
         searchConditions.push(`description.ilike.%${term}%`);
-        // Recherche aussi avec la version normalisée
-        if (normalizedSearch !== term.toLowerCase()) {
-          searchConditions.push(`title.ilike.%${normalizedSearch}%`);
-          searchConditions.push(`description.ilike.%${normalizedSearch}%`);
+      }
+      
+      // Si une catégorie est détectée, on PRIORISE les offres de cette catégorie
+      if (hasCategoryMatch) {
+        // Construire les conditions : catégorie OU recherche textuelle
+        // Cela permet de trouver les offres de la bonne catégorie même si le texte ne correspond pas exactement
+        const categoryConditions: string[] = [];
+        
+        // Condition 1: Offres de la catégorie détectée (prioritaire)
+        for (const cat of matchingCategories) {
+          categoryConditions.push(`category.eq.${cat}`);
         }
-      }
-      
-      // Recherche dans les catégories correspondantes
-      const matchingCategories = findMatchingCategories(filters.search);
-      if (matchingCategories.length > 0) {
-        const categoryConditions = matchingCategories.map(cat => `category.eq.${cat}`);
-        searchConditions.push(...categoryConditions);
-      }
-      
-      // Combiner toutes les conditions avec OR
-      if (searchConditions.length > 0) {
-        query = query.or(searchConditions.join(','));
+        
+        // Condition 2: Recherche textuelle (pour trouver les offres pertinentes même si catégorie différente)
+        categoryConditions.push(...searchConditions);
+        
+        // Combiner avec OR : on accepte soit la catégorie, soit le texte
+        if (categoryConditions.length > 0) {
+          query = query.or(categoryConditions.join(','));
+        }
       } else {
-        // Fallback : recherche simple
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        // Si aucune catégorie n'est détectée, recherche textuelle classique
+        if (searchConditions.length > 0) {
+          query = query.or(searchConditions.join(','));
+        } else {
+          // Fallback : recherche simple
+          query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        }
       }
     }
 
@@ -111,7 +198,44 @@ export const getJobOffers = async (filters?: {
       return [];
     }
 
-    return (data || []).map((job: any) => ({
+    // Filtrer et trier les résultats pour prioriser les offres de la bonne catégorie
+    let filteredData = data || [];
+    
+    // Si une recherche textuelle a été effectuée et qu'une catégorie a été détectée
+    if (filters?.search && !filters?.category) {
+      const matchingCategories = findMatchingCategories(filters.search);
+      if (matchingCategories.length > 0) {
+        // Trier les résultats : d'abord les offres de la catégorie détectée, puis les autres
+        filteredData = filteredData.sort((a: any, b: any) => {
+          const aMatchesCategory = matchingCategories.includes(a.category);
+          const bMatchesCategory = matchingCategories.includes(b.category);
+          
+          // Si les deux sont dans la catégorie ou les deux ne le sont pas, garder l'ordre original
+          if (aMatchesCategory === bMatchesCategory) {
+            return 0;
+          }
+          
+          // Prioriser les offres de la bonne catégorie
+          return aMatchesCategory ? -1 : 1;
+        });
+        
+        // Optionnel : limiter aux 20 premiers résultats de la bonne catégorie + 10 autres pertinents
+        // Mais pour l'instant, on garde tous les résultats triés
+      }
+    }
+
+    const mappedJobs = filteredData.map((job: any) => {
+      // Debug: vérifier les médias
+      if (job.featured_image || job.featured_video) {
+        console.log('📸 Job with media:', {
+          id: job.id,
+          title: job.title,
+          featuredImage: job.featured_image,
+          featuredVideo: job.featured_video,
+        });
+      }
+      
+      return {
       id: job.id,
       companyId: job.company_id,
       title: job.title,
@@ -133,11 +257,13 @@ export const getJobOffers = async (filters?: {
       otherInformation: job.other_information,
       benefits: job.benefits,
       whatYouWillLive: job.what_you_will_live,
-      whatWeWillLove: job.what_we_will_love,
+      whatWeWillLove: job.what_we_will_live,
       whoWeAre: job.who_we_are,
       decisionDNAEnabled: job.decision_dna_enabled || false,
       decisionDNAMode: job.decision_dna_mode || 'no_test',
       decisionProfileTarget: job.decision_profile_target || undefined,
+      featuredImage: job.featured_image || null,
+      featuredVideo: job.featured_video || null,
       company: job.companies
         ? {
             id: job.companies.id,
@@ -155,7 +281,10 @@ export const getJobOffers = async (filters?: {
             whoWeAre: job.companies.who_we_are,
           }
         : undefined,
-    }));
+      };
+    });
+    
+    return mappedJobs;
   } catch (error) {
     console.error('Error in getJobOffers:', error);
     return [];
@@ -222,6 +351,8 @@ export const getJobOfferById = async (id: string): Promise<JobOffer | null> => {
       decisionDNAEnabled: data.decision_dna_enabled || false,
       decisionDNAMode: data.decision_dna_mode || 'no_test',
       decisionProfileTarget: data.decision_profile_target || undefined,
+      featuredImage: data.featured_image || null,
+      featuredVideo: data.featured_video || null,
       company: data.companies
         ? {
             id: data.companies.id,
@@ -283,6 +414,8 @@ export const getCompanyJobOffers = async (companyId: string): Promise<JobOffer[]
       whatYouWillLive: job.what_you_will_live,
       whatWeWillLove: job.what_we_will_love,
       whoWeAre: job.who_we_are,
+      featuredImage: job.featured_image || null,
+      featuredVideo: job.featured_video || null,
     }));
   } catch (error) {
     console.error('Error in getCompanyJobOffers:', error);
@@ -315,14 +448,27 @@ export const createJobOffer = async (jobOffer: Omit<JobOffer, 'id' | 'createdAt'
         decision_dna_enabled: jobOffer.decisionDNAEnabled || false,
         decision_dna_mode: jobOffer.decisionDNAMode || 'no_test',
         decision_profile_target: jobOffer.decisionProfileTarget || null,
+        featured_image: jobOffer.featuredImage || null,
+        featured_video: jobOffer.featuredVideo || null,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating job offer:', error);
+      console.error('❌ Error creating job offer:', error);
       return null;
     }
+
+    console.log('💾 Creating job offer with media:', {
+      featuredImage: jobOffer.featuredImage,
+      featuredVideo: jobOffer.featuredVideo,
+    });
+
+    console.log('✅ Job offer created:', {
+      id: data.id,
+      featuredImage: data.featured_image,
+      featuredVideo: data.featured_video,
+    });
 
     return {
       id: data.id,
@@ -377,6 +523,8 @@ export const updateJobOffer = async (id: string, jobOffer: Partial<JobOffer>): P
     if (jobOffer.decisionDNAEnabled !== undefined) updateData.decision_dna_enabled = jobOffer.decisionDNAEnabled;
     if (jobOffer.decisionDNAMode !== undefined) updateData.decision_dna_mode = jobOffer.decisionDNAMode;
     if (jobOffer.decisionProfileTarget !== undefined) updateData.decision_profile_target = jobOffer.decisionProfileTarget;
+    if (jobOffer.featuredImage !== undefined) updateData.featured_image = jobOffer.featuredImage;
+    if (jobOffer.featuredVideo !== undefined) updateData.featured_video = jobOffer.featuredVideo;
 
     const { data, error } = await supabase
       .from('job_offers')

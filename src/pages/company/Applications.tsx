@@ -198,21 +198,21 @@ export const CompanyApplications = () => {
                           <CardTitle className="text-lg sm:text-xl break-words">{application.jobOffer?.title}</CardTitle>
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge variant={getStatusVariant(application.status)} className="flex items-center gap-1 sm:gap-2 text-xs">
-                              {getStatusIcon(application.status)}
-                              {getStatusLabel(application.status)}
-                            </Badge>
-                            {application.candidate?.certified && (
+                            {getStatusIcon(application.status)}
+                            {getStatusLabel(application.status)}
+                          </Badge>
+                          {application.candidate?.certified && (
                               <Badge variant="default" className="bg-green-100 text-green-700 text-xs">
-                                ✓ Certifié
-                              </Badge>
-                            )}
-                            {application.decisionDNA?.compatibilityScore !== undefined && (
+                              ✓ Certifié
+                            </Badge>
+                          )}
+                          {application.decisionDNA?.compatibilityScore !== undefined && (
                               <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                                <Target className="w-3 h-3" />
+                              <Target className="w-3 h-3" />
                                 <span className="hidden sm:inline">Compatibilité: {formatCompatibilityScore(application.decisionDNA.compatibilityScore)}</span>
                                 <span className="sm:hidden">{formatCompatibilityScore(application.decisionDNA.compatibilityScore)}</span>
-                              </Badge>
-                            )}
+                            </Badge>
+                          )}
                           </div>
                         </div>
                         <CardDescription className="mb-4 text-sm">

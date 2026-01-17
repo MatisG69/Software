@@ -23,6 +23,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import { JobOnboarding } from '@/components/JobOnboarding';
 import { getJobOffers, addFavoriteJob, removeFavoriteJob, getFavoriteJobIds } from '@/lib/supabase';
 import { JobOffer } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -60,12 +61,8 @@ export const CandidateJobs = () => {
     }
   }, []);
 
-  // Fermer le Sheet si on passe en mode desktop
-  useEffect(() => {
-    if (!isMobile && isMobileSheetOpen) {
-      setIsMobileSheetOpen(false);
-    }
-  }, [isMobile, isMobileSheetOpen]);
+  // Note: On garde le Sheet ouvert même en mode desktop pour l'expérience immersive
+  // Le Sheet fonctionne maintenant sur mobile et desktop
 
   // Charger les offres depuis Supabase avec recherche
   const loadJobs = async () => {
@@ -407,12 +404,12 @@ export const CandidateJobs = () => {
                         style={{
                           animationDelay: `${index * 0.1}s`
                         }}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         setSelectedJob(job);
-                        // Ouvrir le panel sur mobile
-                        if (isMobile) {
-                          setIsMobileSheetOpen(true);
-                        }
+                        // Ouvrir le panel immersif (mobile et desktop)
+                        setIsMobileSheetOpen(true);
                       }}
                     >
                       {/* Effet de brillance au survol */}
@@ -433,7 +430,7 @@ export const CandidateJobs = () => {
                             {job.company && (
                                 <CardDescription className="text-base font-semibold text-foreground/90 flex items-center gap-2">
                                   <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                                  {job.company.name}
+                                {job.company.name}
                               </CardDescription>
                             )}
                               
@@ -485,7 +482,11 @@ export const CandidateJobs = () => {
                                   ? 'text-primary bg-primary/10 hover:bg-primary/20'
                                   : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
                             }`}
-                            onClick={(e) => toggleSaveJob(job.id, e)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleSaveJob(job.id, e);
+                            }}
                           >
                             <Bookmark 
                                 className={`w-4 h-4 ${
@@ -683,7 +684,10 @@ export const CandidateJobs = () => {
                         <Button
                           size="lg"
                           className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 font-bold h-14 text-base rounded-xl"
-                          onClick={() => navigate(`/candidate/jobs/${selectedJob.id}`)}
+                          onClick={() => {
+                            setSelectedJob(selectedJob);
+                            setIsMobileSheetOpen(true);
+                          }}
                         >
                           <span className="flex items-center gap-2">
                             <Sparkles className="w-5 h-5" />
@@ -710,213 +714,23 @@ export const CandidateJobs = () => {
           </div>
         )}
 
-        {/* Panel mobile pour afficher l'offre sélectionnée */}
-        <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
-          <SheetContent side="bottom" className="h-[90vh] overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
-            {selectedJob ? (
-              <div className="space-y-6">
-                <SheetHeader className="pb-4 border-b-2 border-primary/10 bg-gradient-to-r from-primary/5 via-transparent to-transparent -mx-6 px-6 pt-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                        <SheetTitle className="text-xl sm:text-2xl font-bold text-foreground break-words bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                          {selectedJob.title}
-                        </SheetTitle>
-                        {selectedJob.createdAt && (new Date().getTime() - new Date(selectedJob.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
-                          <span className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg">
-                            Nouveau
-                          </span>
-                        )}
-                      </div>
-                      {selectedJob.company && (
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                          <SheetDescription className="text-lg font-semibold text-foreground/90">
-                            {selectedJob.company.name}
-                          </SheetDescription>
-                        </div>
-                      )}
-                      <p className="text-sm text-muted-foreground mb-4 flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-primary/70" />
-                        {selectedJob.location}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedJob.salary && (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 shadow-sm">
-                            <DollarSign className="w-3.5 h-3.5 mr-1.5" />
-                            {formatSalary(selectedJob.salary.min, selectedJob.salary.max, selectedJob.salary.currency)}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-br from-muted to-muted/80 text-foreground border border-border/60 shadow-sm">
-                          <Briefcase className="w-3.5 h-3.5 mr-1.5" />
-                          {getTypeLabel(selectedJob.type)}
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`flex-shrink-0 h-10 w-10 rounded-lg transition-colors ${
-                        savedJobs.has(selectedJob.id)
-                          ? 'text-primary bg-primary/10 hover:bg-primary/20'
-                          : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
-                      }`}
-                      onClick={(e) => toggleSaveJob(selectedJob.id, e)}
-                    >
-                      <Bookmark 
-                        className={`w-5 h-5 ${
-                          savedJobs.has(selectedJob.id) ? 'fill-current' : ''
-                        }`} 
-                      />
-                    </Button>
-                  </div>
-                </SheetHeader>
-
-                <div className="space-y-6">
-                  {/* Détails de l'emploi */}
-                  <div className="space-y-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
-                      <h3 className="text-xl font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Informations clés</h3>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {selectedJob.salary && (
-                        <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 rounded-xl border-2 border-green-200/50 dark:border-green-800/30 shadow-sm">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/30 dark:to-green-800/20 flex-shrink-0">
-                            <DollarSign className="w-5 h-5 text-green-700 dark:text-green-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-foreground mb-1">Salaire</p>
-                            <p className="text-sm font-semibold text-green-700 dark:text-green-400">
-                              {formatSalary(selectedJob.salary.min, selectedJob.salary.max, selectedJob.salary.currency)}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-muted/80 to-muted/50 rounded-xl border-2 border-border/60 shadow-sm">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-muted to-muted/80 flex-shrink-0">
-                          <Briefcase className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-foreground mb-1">Type de poste</p>
-                          <p className="text-sm font-semibold text-foreground">
-                            {getTypeLabel(selectedJob.type)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-muted/80 to-muted/50 rounded-xl border-2 border-border/60 shadow-sm">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-muted to-muted/80 flex-shrink-0">
-                          <MapPin className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-foreground mb-1">Lieu de l'emploi</p>
-                          <p className="text-sm font-semibold text-foreground">
-                            {selectedJob.location}
-                          </p>
-                        </div>
-                      </div>
-                      {selectedJob.benefits && (
-                        <div className="flex items-start gap-4 p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border-2 border-primary/20 shadow-sm">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex-shrink-0">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-foreground mb-1">Avantages</p>
-                            <p className="text-sm font-medium text-foreground line-clamp-2">
-                              {selectedJob.benefits}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Sections de contenu */}
-                  {[
-                    { title: 'Description du poste', content: selectedJob.description },
-                    { title: 'Qui sommes-nous', content: selectedJob.whoWeAre },
-                    { title: 'Vos missions', content: selectedJob.missions },
-                    { title: 'Ce que vous allez vivre chez nous', content: selectedJob.whatYouWillLive },
-                    { title: 'Ce que nous allons aimer chez vous', content: selectedJob.whatWeWillLove },
-                    { title: 'Expériences attendues', content: selectedJob.expectedExperience },
-                    { title: 'Autres informations', content: selectedJob.otherInformation },
-                  ].map((section, idx) => 
-                    section.content ? (
-                      <div key={idx} className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
-                          <h3 className="text-lg font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{section.title}</h3>
-                        </div>
-                        <div className="bg-gradient-to-br from-muted/60 to-muted/40 rounded-xl border-2 border-border/60 p-5 shadow-sm">
-                          <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                            {section.content}
-                          </p>
-                        </div>
-                      </div>
-                    ) : null
-                  )}
-
-                  {/* Compétences requises */}
-                  {selectedJob.requirements && selectedJob.requirements.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
-                        <h3 className="text-lg font-bold text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Compétences requises</h3>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedJob.requirements.map((req, idx) => (
-                          <Badge 
-                            key={idx} 
-                            variant="secondary" 
-                            className="px-3 py-1.5 text-sm font-semibold bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/15 transition-all duration-200 rounded-lg shadow-sm"
-                          >
-                            {req}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="pt-6 border-t-2 border-border space-y-3 pb-6">
-                    <Button
-                      variant="outline"
-                      className="w-full border-2 hover:border-destructive/50 hover:text-destructive hover:bg-destructive/5 transition-all duration-200 font-semibold h-12 rounded-xl"
-                      onClick={() => {
-                        if (confirm('Voulez-vous signaler cette offre ?')) {
-                          alert('Offre signalée. Merci pour votre contribution.');
-                        }
-                      }}
-                    >
-                      Signaler l'offre
-                    </Button>
-                    <Button
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 font-bold h-14 text-base rounded-xl"
-                      onClick={() => {
-                        setIsMobileSheetOpen(false);
-                        navigate(`/candidate/jobs/${selectedJob.id}`);
-                      }}
-                    >
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5" />
-                        Voir les détails et postuler
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
-                  <Briefcase className="w-10 h-10 text-muted-foreground" />
-                </div>
-                <p className="text-lg font-semibold text-foreground mb-2">Aucune offre sélectionnée</p>
-                <p className="text-sm text-muted-foreground">Cliquez sur une offre pour voir les détails</p>
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
+        {/* Onboarding immersif pour présenter l'offre */}
+        <JobOnboarding
+          job={selectedJob}
+          open={isMobileSheetOpen}
+          onClose={() => setIsMobileSheetOpen(false)}
+          onApply={() => {
+            if (selectedJob) {
+              setIsMobileSheetOpen(false);
+              navigate(`/candidate/jobs/${selectedJob.id}`);
+            }
+          }}
+          onFavorite={(jobId) => {
+            const event = new Event('click') as any;
+            toggleSaveJob(jobId, event);
+          }}
+          isFavorite={selectedJob ? savedJobs.has(selectedJob.id) : false}
+        />
       </div>
 
       <style>{`

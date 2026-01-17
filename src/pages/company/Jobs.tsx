@@ -87,10 +87,10 @@ export const CompanyJobs = () => {
                       <CardDescription className="line-clamp-2 mb-4 text-sm">{job.description}</CardDescription>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <span>{job.location}</span>
+                        <span>{job.location}</span>
                         </span>
                         <span className="flex items-center gap-1">
-                          <span>{job.type}</span>
+                        <span>{job.type}</span>
                         </span>
                       </div>
                     </div>

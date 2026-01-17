@@ -616,7 +616,7 @@ export const ChatBox = () => {
                 role: 'tool',
                 content: JSON.stringify({ success: false, error: error.message }),
                 tool_call_id: toolCall.function.name, // Gemini utilise le nom de la fonction comme ID
-              });
+      });
             }
           }
         }
@@ -637,7 +637,7 @@ export const ChatBox = () => {
           },
         ];
 
-        try {
+    try {
           const systemPrompt = messages.find(m => m.role === 'system')?.content;
           // Utiliser sendMessageToGemini car on n'a plus besoin de function calling pour la réponse finale
           const finalResponse = await sendMessageToGemini(messagesWithToolResults, systemPrompt);
@@ -712,7 +712,7 @@ export const ChatBox = () => {
       } catch (error) {
         console.error('Error saving messages:', error);
       }
-
+      
       // Animation pour le message assistant
       setTimeout(() => {
         setAnimatingMessages((prev) => new Set([...prev, assistantMessageIndex]));
@@ -737,13 +737,13 @@ export const ChatBox = () => {
     } finally {
       setLoading(false);
       setExecutedActions([]);
-      setTimeout(() => {
-        setAnimatingMessages((prev) => {
-          const next = new Set(prev);
+        setTimeout(() => {
+          setAnimatingMessages((prev) => {
+            const next = new Set(prev);
           next.delete(userMessageIndex);
-          return next;
-        });
-      }, 500);
+            return next;
+          });
+        }, 500);
     }
   };
 
