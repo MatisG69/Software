@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { getCompanyProfile, updateCompanyProfile } from '@/lib/supabase';
 
 export const CompanyProfile = () => {
